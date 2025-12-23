@@ -28,9 +28,9 @@ const Landing = () => {
   ];
 
   const stats = [
-    { value: "500+", label: "Verified Hostels" },
-    { value: "10K+", label: "Happy Students" },
-    { value: "50+", label: "Cities Covered" },
+    { value: "50+", label: "Verified Hostels" },
+    { value: "5K+", label: "Happy Students" },
+    { value: "15+", label: "Cities Covered" },
     { value: "4.5", label: "Average Rating" }
   ];
 
@@ -121,7 +121,7 @@ const Landing = () => {
               Why Choose HostelGo?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              We're committed to making your hostel search experience seamless and reliable.
+            We're committed to making your hostel search experience seamless and reliable. HostelGo helps students and residents discover verified hostels, compare options easily, and make informed decisions based on location, pricing, and amenities ; all from one trusted platform.
             </p>
           </div>
 
@@ -219,7 +219,7 @@ const Landing = () => {
             Ready to Find Your Hostel?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands of students who have found their perfect accommodation through HostelGo.
+          Start your search with HostelGo and explore verified accommodations tailored to your needs. Whether you’re a student or a resident, finding the right place has never been easier.
           </p>
           <Link to="/signup">
             <Button size="lg" className="text-lg px-8">
@@ -239,7 +239,7 @@ const Landing = () => {
               <span className="font-heading font-bold text-lg">HostelGo</span>
             </div>
             <p className="text-background/70 text-sm">
-              © 2024 HostelGo. Academic Project - Frontend Demo
+              © 2024 HostelGo. 
             </p>
           </div>
         </div>

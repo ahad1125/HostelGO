@@ -208,10 +208,10 @@ const Signup = () => {
 
           {/* Backend connection note */}
           <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-xs text-center text-muted-foreground">
-              <strong>Note:</strong> Make sure your backend server is running on <code className="bg-background px-1 rounded">http://localhost:5000</code>
-            </p>
-          </div>
+  <p className="text-xs text-center text-muted-foreground">
+    Your login information is securely processed to ensure safe and reliable access to your account.
+  </p>
+</div>
         </CardContent>
       </Card>
     </div>
