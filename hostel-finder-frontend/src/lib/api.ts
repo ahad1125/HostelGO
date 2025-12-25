@@ -2,8 +2,15 @@
 // Uses environment variable for deployment flexibility
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://hostelgo.up.railway.app";
 
+// Log API configuration on module load
+console.log("🔧 API Configuration:", {
+  VITE_API_URL: import.meta.env.VITE_API_URL || "not set",
+  API_BASE_URL: API_BASE_URL,
+  NODE_ENV: import.meta.env.MODE
+});
+
 if (!import.meta.env.VITE_API_URL) {
-  console.warn("VITE_API_URL is not defined, using default Railway URL:", API_BASE_URL);
+  console.warn("⚠️ VITE_API_URL is not defined, using default Railway URL:", API_BASE_URL);
 }
 
 // Types
@@ -101,18 +108,37 @@ export const authApi = {
 export const hostelApi = {
   // Public endpoint - no authentication required (for landing page)
   getPublic: async (): Promise<Hostel[]> => {
-    const response = await fetch(`${API_BASE_URL}/hostels/public`, {
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ error: "Failed to fetch hostels" }));
-      throw new Error(
-        error.error || `Failed to fetch hostels (${response.status})`
-      );
+    const url = `${API_BASE_URL}/hostels/public`;
+    console.log("🌐 Fetching public hostels from:", url);
+    
+    try {
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      console.log("📡 Response status:", response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText || `Failed to fetch hostels (${response.status})` };
+        }
+        throw new Error(error.error || `Failed to fetch hostels (${response.status})`);
+      }
+      
+      const data = await response.json();
+      console.log("✅ Received", Array.isArray(data) ? data.length : 0, "hostels");
+      return Array.isArray(data) ? data : [];
+    } catch (error: any) {
+      console.error("❌ Fetch error in getPublic:", error);
+      // Return empty array instead of throwing to prevent UI breakage
+      console.warn("⚠️ Returning empty array due to fetch error");
+      return [];
     }
-    return response.json();
   },
 
   // Authenticated endpoint - requires login

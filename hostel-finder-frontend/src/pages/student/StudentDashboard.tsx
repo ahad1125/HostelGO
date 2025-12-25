@@ -45,9 +45,11 @@ const StudentDashboard = () => {
           return;
         }
 
+        console.log("🔄 StudentDashboard: Fetching hostels...");
         const data: ApiHostel[] = await hostelApi.getAll();
+        console.log("✅ StudentDashboard: Received", Array.isArray(data) ? data.length : 0, "hostels");
         // Backend already filters for verified hostels for students, so no need to filter again
-        const transformed: HostelCardType[] = data.map((hostel) => ({
+        const transformed: HostelCardType[] = (Array.isArray(data) ? data : []).map((hostel) => ({
           id: hostel.id.toString(),
           name: hostel.name || 'Unnamed Hostel',
           city: hostel.city || 'Unknown',

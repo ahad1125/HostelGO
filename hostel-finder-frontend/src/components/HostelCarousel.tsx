@@ -26,11 +26,14 @@ const HostelCarousel = ({ autoSlideInterval = 10000 }: HostelCarouselProps) => {
     const fetchHostels = async () => {
       try {
         setIsLoading(true);
+        console.log("🔄 HostelCarousel: Fetching hostels...");
         // Use public endpoint that doesn't require authentication
         const data = await hostelApi.getPublic();
-        setHostels(data);
-      } catch (error) {
-        console.error("Error fetching hostels for carousel:", error);
+        console.log("✅ HostelCarousel: Received", data.length, "hostels");
+        setHostels(Array.isArray(data) ? data : []);
+      } catch (error: any) {
+        console.error("❌ HostelCarousel: Error fetching hostels:", error);
+        console.error("Error details:", error.message, error.stack);
         // If fetch fails, use empty array (will show fallback card)
         setHostels([]);
       } finally {
