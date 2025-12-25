@@ -1,4 +1,5 @@
 const Hostel = require("../models/hostel");
+const db = require("../config/database"); // Import db directly for student query
 
 /**
  * HOSTEL CONTROLLER
@@ -59,26 +60,43 @@ const getAllHostels = async (req, res) => {
     }
 
     try {
+        console.log("🔍 Getting hostels for user:", user.role, user.id);
+
+        // For students, use direct query (same as public endpoint) for reliability
+        if (user.role === 'student') {
+            console.log("📚 Student: Fetching verified hostels only");
+            const [rows] = await db.query(
+                `SELECT h.*, u.name as owner_name, u.email as owner_email,
+                        COALESCE(u.contact_number, '') as owner_contact_number
+                 FROM hostels h
+                 JOIN users u ON h.owner_id = u.id
+                 WHERE h.is_verified = 1
+                 ORDER BY h.id DESC`
+            );
+            console.log("✅ Found", rows.length, "verified hostels for student");
+            return res.json(Array.isArray(rows) ? rows : []);
+        }
+
+        // For owners and admins, use the model method
         const filters = {};
 
-        // Role-based filtering
-        if (user.role === 'student') {
-            // Students can only see verified hostels
-            filters.is_verified = 1;
-        } else if (user.role === 'owner') {
+        if (user.role === 'owner') {
             // Owners can only see their own hostels
             filters.owner_id = user.id;
+            console.log("🏠 Owner: Fetching own hostels");
+        } else if (user.role === 'admin') {
+            // Admins see all hostels (no filters)
+            console.log("👑 Admin: Fetching all hostels");
         }
-        // Admins see all hostels (no filters)
 
-        console.log("Getting hostels with filters:", filters, "for user:", user);
+        console.log("📝 Using filters:", filters);
         const hostels = await Hostel.findAll(filters);
-        console.log("Found", hostels.length, "hostels");
+        console.log("✅ Found", hostels.length, "hostels");
         
         // Return empty array if no hostels (this is valid, not an error)
-        return res.json(hostels || []);
+        return res.json(Array.isArray(hostels) ? hostels : []);
     } catch (err) {
-        console.error("Error in getAllHostels:", err.message);
+        console.error("❌ Error in getAllHostels:", err.message);
         console.error("Error code:", err.code);
         console.error("Error SQL state:", err.sqlState);
         console.error("Full error:", err);
