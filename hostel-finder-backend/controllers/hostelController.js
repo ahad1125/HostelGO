@@ -10,6 +10,40 @@ const Hostel = require("../models/hostel");
  */
 
 /**
+ * Get public verified hostels (no authentication required)
+ * GET /hostels/public
+ * Returns only verified hostels for landing page, carousel, etc.
+ */
+const getPublicHostels = async (req, res) => {
+    const db = require("../config/database");
+    try {
+        console.log("🔍 Getting public hostels (verified only)");
+        
+        // Direct query - simple and reliable
+        const query = "SELECT * FROM hostels WHERE is_verified = 1 ORDER BY id DESC";
+        console.log("📝 Executing query:", query);
+        
+        const [rows] = await db.query(query);
+        
+        console.log("✅ Found", Array.isArray(rows) ? rows.length : 0, "public hostels");
+        
+        // Always return an array, even if empty
+        const result = Array.isArray(rows) ? rows : [];
+        return res.json(result);
+    } catch (err) {
+        console.error("❌ Error in getPublicHostels:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error SQL state:", err.sqlState);
+        console.error("Stack:", err.stack);
+        
+        // Return empty array instead of 500 error
+        // This prevents frontend from breaking
+        console.log("⚠️ Returning empty array due to error");
+        return res.json([]);
+    }
+};
+
+/**
  * Get all hostels (with role-based filtering)
  * GET /hostels
  * - Students: Only verified hostels
@@ -261,6 +295,7 @@ const deleteHostel = async (req, res) => {
 };
 
 module.exports = {
+    getPublicHostels,
     getAllHostels,
     searchHostels,
     getHostelById,
