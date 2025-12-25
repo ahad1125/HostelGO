@@ -1,4 +1,4 @@
-const Hostel = require("../models/Hostel");
+const Hostel = require("../models/hostel");
 
 /**
  * ADMIN CONTROLLER
@@ -43,7 +43,7 @@ const verifyHostel = async (req, res) => {
         // Update verification status
         const updatedHostel = await Hostel.setVerificationStatus(parseInt(hostelId), 1);
 
-        res.json({ 
+        res.json({
             message: "Hostel verified successfully",
             hostel: updatedHostel
         });
@@ -74,8 +74,8 @@ const unverifyHostel = async (req, res) => {
         if (hostel.is_verified === 0) {
             // Delete the hostel (cascade will handle related records)
             await Hostel.deleteById(parseInt(hostelId));
-            
-            res.json({ 
+
+            res.json({
                 message: "Hostel rejected and removed successfully",
                 deleted: true
             });
@@ -83,7 +83,7 @@ const unverifyHostel = async (req, res) => {
             // Just unverify verified hostels
             const updatedHostel = await Hostel.setVerificationStatus(parseInt(hostelId), 0);
 
-            res.json({ 
+            res.json({
                 message: "Hostel unverified successfully",
                 hostel: updatedHostel,
                 deleted: false
