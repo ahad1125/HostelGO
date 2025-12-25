@@ -295,22 +295,45 @@ const createHostel = async (req, res) => {
     }
 
     try {
-        const hostel = await Hostel.create({
-            name,
-            address,
-            city,
-            rent,
-            facilities: facilities || '',
-            owner_id: user.id,
-            is_verified: 0
-        });
+        console.log("🔍 Creating hostel by owner:", user.id);
+        console.log("📝 Hostel data:", { name, address, city, rent, facilities });
+        
+        // Use direct query for reliability
+        const [result] = await db.query(
+            "INSERT INTO hostels (name, address, city, rent, facilities, owner_id, contact_number, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [name, address, city, parseInt(rent), facilities || '', user.id, null, 0]
+        );
 
+        const hostelId = result.insertId;
+        
+        // Fetch the created hostel with owner info
+        const [hostelRows] = await db.query(
+            `SELECT h.*, u.name as owner_name, u.email as owner_email,
+                    COALESCE(u.contact_number, '') as owner_contact_number
+             FROM hostels h
+             JOIN users u ON h.owner_id = u.id
+             WHERE h.id = ?`,
+            [hostelId]
+        );
+
+        const hostel = hostelRows[0];
+
+        console.log("✅ Hostel created successfully:", hostelId);
         res.status(201).json({
             message: "Hostel created successfully (pending verification)",
             hostel
         });
     } catch (err) {
-        return res.status(500).json({ error: "Failed to create hostel", details: err.message });
+        console.error("❌ Error in createHostel:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error SQL state:", err.sqlState);
+        console.error("Stack:", err.stack);
+        return res.status(500).json({ 
+            error: "Failed to create hostel", 
+            details: err.message,
+            code: err.code,
+            sqlState: err.sqlState
+        });
     }
 };
 
