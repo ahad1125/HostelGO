@@ -11,63 +11,63 @@ const enquiryRoutes = require("./routes/enquiry");
 
 const app = express();
 
+// =====================
 // Middleware
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // Parse JSON request bodies
+// =====================
+app.use(cors({
+    origin: "*", // OK for now; restrict later when frontend is live
+}));
+app.use(express.json());
 
-// Root route - Health check
+// =====================
+// Health / Root Route
+// =====================
 app.get("/", (req, res) => {
-    res.json({ 
+    res.json({
         message: "Hostel Finder Backend API",
         status: "Running",
         endpoints: {
             auth: "/auth/signup, /auth/login",
             hostels: "/hostels, /hostels/search, /hostels/:id",
             admin: "/admin/hostels, /admin/verify-hostel/:id, /admin/unverify-hostel/:id",
-            reviews: "/reviews, /reviews/hostel/:hostelId, /reviews/student/:studentId, /reviews/:id (PUT/DELETE)",
-            enquiries: "/enquiries, /enquiries/hostel/:id, /enquiries/owner, /enquiries/student, /enquiries/:id/reply (PUT)"
-        }
+            reviews: "/reviews, /reviews/hostel/:hostelId",
+            enquiries: "/enquiries, /enquiries/hostel/:id",
+        },
     });
 });
 
-// Route handlers
-app.use("/auth", authRoutes); // Authentication routes (public)
-app.use("/hostels", hostelRoutes); // Hostel routes (authenticated, role-based)
-app.use("/admin", adminRoutes); // Admin routes (admin only)
-app.use("/reviews", reviewRoutes); // Review routes (students create, anyone view)
-app.use("/enquiries", enquiryRoutes); // Enquiry routes (students create, owners view)
+// =====================
+// Routes
+// =====================
+app.use("/auth", authRoutes);
+app.use("/hostels", hostelRoutes);
+app.use("/admin", adminRoutes);
+app.use("/reviews", reviewRoutes);
+app.use("/enquiries", enquiryRoutes);
 
-// 404 handler for undefined routes
+// =====================
+// 404 Handler
+// =====================
 app.use((req, res) => {
     res.status(404).json({ error: "Route not found" });
 });
 
-// Error handler
+// =====================
+// Error Handler
+// =====================
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: "Something went wrong!", details: err.message });
+    console.error(err);
+    res.status(500).json({
+        error: "Something went wrong",
+        details: err.message,
+    });
 });
 
-// Start server after database is ready
+// =====================
+// Start Server (Railway-safe)
+// =====================
 const PORT = process.env.PORT || 5000;
 
-// Wait for database initialization before starting server
-if (db.ready) {
-    db.ready.then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server started on port ${PORT}`);
-            console.log(`API available at http://localhost:${PORT}`);
-        });
-    }).catch((err) => {
-        console.error("Failed to start server - database not ready:", err);
-        process.exit(1);
-    });
-} else {
-    // Fallback: wait 3 seconds if ready promise not available
-    setTimeout(() => {
-        app.listen(PORT, () => {
-            console.log(`Server started on port ${PORT}`);
-            console.log(`API available at http://localhost:${PORT}`);
-        });
-    }, 3000);
-}
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
