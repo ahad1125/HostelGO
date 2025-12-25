@@ -540,3 +540,121 @@ export const enquiryApi = {
     return response.json();
   },
 };
+
+export interface Booking {
+  id: number;
+  hostel_id: number;
+  student_id: number;
+  status: "pending" | "confirmed" | "cancelled";
+  hostel_name?: string;
+  hostel_address?: string;
+  hostel_city?: string;
+  hostel_rent?: number;
+  owner_name?: string;
+  owner_email?: string;
+  owner_contact_number?: string;
+  student_name?: string;
+  student_email?: string;
+  student_contact_number?: string;
+}
+
+// Booking API
+export const bookingApi = {
+  create: async (hostelId: number): Promise<{ booking: Booking }> => {
+    const url = `${API_BASE_URL}/bookings`;
+    console.log("🌐 Creating booking for hostel:", hostelId);
+    
+    try {
+      const creds = getCredentials();
+      const response = await fetch(url, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          email: creds?.email,
+          password: creds?.password,
+          hostel_id: hostelId,
+        }),
+      });
+      
+      console.log("📡 Booking response status:", response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Booking error response:", errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText || `Failed to create booking (${response.status})` };
+        }
+        throw new Error(error.error || `Failed to book hostel (${response.status})`);
+      }
+      
+      const data = await response.json();
+      console.log("✅ Booking created successfully:", data.booking?.id);
+      return data;
+    } catch (error: any) {
+      console.error("❌ Fetch error in booking.create:", error);
+      throw error;
+    }
+  },
+
+  getByStudent: async (): Promise<Booking[]> => {
+    const response = await fetch(`${API_BASE_URL}/bookings/student`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch bookings");
+    }
+    return response.json();
+  },
+
+  getByHostel: async (hostelId: number): Promise<Booking[]> => {
+    const response = await fetch(`${API_BASE_URL}/bookings/hostel/${hostelId}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch bookings");
+    }
+    return response.json();
+  },
+
+  update: async (
+    bookingId: number,
+    status: "pending" | "confirmed" | "cancelled"
+  ): Promise<{ booking: Booking }> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        email: creds?.email,
+        password: creds?.password,
+        status,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to update booking");
+    }
+    return response.json();
+  },
+
+  delete: async (bookingId: number): Promise<void> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        email: creds?.email,
+        password: creds?.password,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to delete booking");
+    }
+  },
+};

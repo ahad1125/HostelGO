@@ -7,6 +7,7 @@ const hostelRoutes = require("./routes/hostel");
 const adminRoutes = require("./routes/admin");
 const reviewRoutes = require("./routes/review");
 const enquiryRoutes = require("./routes/enquiry");
+const bookingRoutes = require("./routes/booking");
 
 const app = express();
 
@@ -55,13 +56,14 @@ app.get("/", (req, res) => {
     res.json({
         message: "Hostel Finder Backend API",
         status: "Running",
-        endpoints: {
-            auth: "/auth/signup, /auth/login",
-            hostels: "/hostels, /hostels/search, /hostels/:id",
-            admin: "/admin/hostels, /admin/verify-hostel/:id, /admin/unverify-hostel/:id",
-            reviews: "/reviews, /reviews/hostel/:hostelId",
-            enquiries: "/enquiries, /enquiries/hostel/:id",
-        },
+               endpoints: {
+                   auth: "/auth/signup, /auth/login",
+                   hostels: "/hostels, /hostels/search, /hostels/:id",
+                   admin: "/admin/hostels, /admin/verify-hostel/:id, /admin/unverify-hostel/:id",
+                   reviews: "/reviews, /reviews/hostel/:hostelId",
+                   enquiries: "/enquiries, /enquiries/hostel/:id",
+                   bookings: "/bookings, /bookings/student, /bookings/hostel/:hostelId",
+               },
     });
 });
 
@@ -142,6 +144,7 @@ app.use("/hostels", hostelRoutes);
 app.use("/admin", adminRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/enquiries", enquiryRoutes);
+app.use("/bookings", bookingRoutes);
 
 // =====================
 // 404 Handler

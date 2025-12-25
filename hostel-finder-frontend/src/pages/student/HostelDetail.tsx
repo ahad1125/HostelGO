@@ -35,7 +35,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { hostelApi, reviewApi, enquiryApi, Hostel, Review } from "@/lib/api";
+import { hostelApi, reviewApi, enquiryApi, bookingApi, Hostel, Review, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -60,6 +60,8 @@ const HostelDetail = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [existingBooking, setExistingBooking] = useState<Booking | null>(null);
   
   const [reviewForm, setReviewForm] = useState({
     rating: 5,
@@ -96,6 +98,17 @@ const HostelDetail = () => {
       console.log("✅ HostelDetail: Received", reviewsData.length, "reviews");
       setHostel(hostelData);
       setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+      
+      // Check if student has existing booking for this hostel
+      if (user && user.role === 'student') {
+        try {
+          const bookings = await bookingApi.getByStudent();
+          const booking = bookings.find(b => b.hostel_id === parseInt(id!) && (b.status === 'pending' || b.status === 'confirmed'));
+          setExistingBooking(booking || null);
+        } catch (err) {
+          console.log("No existing booking found");
+        }
+      }
     } catch (error: any) {
       console.error("❌ HostelDetail: Error fetching data:", error);
       toast({
@@ -272,6 +285,45 @@ const HostelDetail = () => {
       });
     } finally {
       setIsSubmittingEnquiry(false);
+    }
+  };
+
+  const handleBookHostel = async () => {
+    if (!user || user.role !== 'student') {
+      toast({
+        title: "Authentication required",
+        description: "Please log in as a student to book hostels",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hostel || hostel.is_verified !== 1) {
+      toast({
+        title: "Cannot book",
+        description: "Only verified hostels can be booked",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      const result = await bookingApi.create(parseInt(id!));
+      setExistingBooking(result.booking);
+      toast({
+        title: "Booking created!",
+        description: "Your booking is pending confirmation from the owner",
+      });
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      toast({
+        title: "Failed to book hostel",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -511,6 +563,67 @@ const HostelDetail = () => {
               <CardTitle className="font-heading text-lg">Contact Hostel</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {existingBooking ? (
+                <div className="p-4 bg-muted rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Booking Status:</span>
+                    <Badge 
+                      variant={existingBooking.status === 'confirmed' ? 'default' : existingBooking.status === 'pending' ? 'secondary' : 'destructive'}
+                    >
+                      {existingBooking.status.charAt(0).toUpperCase() + existingBooking.status.slice(1)}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {existingBooking.status === 'pending' 
+                      ? "Waiting for owner confirmation"
+                      : existingBooking.status === 'confirmed'
+                      ? "Your booking is confirmed!"
+                      : "This booking has been cancelled"}
+                  </p>
+                  {existingBooking.status === 'pending' && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={async () => {
+                        try {
+                          await bookingApi.update(existingBooking.id, 'cancelled');
+                          setExistingBooking(null);
+                          toast({
+                            title: "Booking cancelled",
+                            description: "Your booking has been cancelled",
+                          });
+                        } catch (error: any) {
+                          toast({
+                            title: "Failed to cancel",
+                            description: error.message || "Please try again",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      Cancel Booking
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Button 
+                  className="w-full gap-2 bg-primary hover:bg-primary/90" 
+                  onClick={handleBookHostel}
+                  disabled={isBooking || !hostel || hostel.is_verified !== 1}
+                >
+                  {isBooking ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Booking...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-4 w-4" />
+                      Book This Hostel
+                    </>
+                  )}
+                </Button>
+              )}
               <Button className="w-full gap-2" onClick={handleCallNow}>
                 <Mail className="h-4 w-4" />
                 Send Email
