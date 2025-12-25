@@ -1,12 +1,19 @@
 // API configuration for HostelGo backend
-const API_BASE_URL = 'http://localhost:5000';
+// const API_BASE_URL = 'http://localhost:5000';
+
+// API configuration for HostelGo backend (Vite env)
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+  console.error("VITE_API_URL is not defined");
+}
 
 // Types
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'student' | 'owner' | 'admin';
+  role: "student" | "owner" | "admin";
 }
 
 export interface Hostel {
@@ -35,12 +42,12 @@ export interface Review {
 
 // Get stored credentials
 const getCredentials = () => {
-  const user = localStorage.getItem('hostelgo_user');
+  const user = localStorage.getItem("hostelgo_user");
   if (!user) return null;
   const parsed = JSON.parse(user);
   return {
     email: parsed.email,
-    password: localStorage.getItem('hostelgo_password') || ''
+    password: localStorage.getItem("hostelgo_password") || "",
   };
 };
 
@@ -48,106 +55,138 @@ const getCredentials = () => {
 const getAuthHeaders = (): HeadersInit => {
   const creds = getCredentials();
   if (!creds || !creds.email || !creds.password) {
-    console.warn('No credentials found for API request');
-    return { 'Content-Type': 'application/json' };
+    console.warn("No credentials found for API request");
+    return { "Content-Type": "application/json" };
   }
   return {
-    'Content-Type': 'application/json',
-    'X-User-Email': creds.email,
-    'X-User-Password': creds.password
+    "Content-Type": "application/json",
+    "X-User-Email": creds.email,
+    "X-User-Password": creds.password,
   };
 };
 
 // Auth API
 export const authApi = {
-  signup: async (name: string, email: string, password: string, role: string): Promise<{ user: User }> => {
+  signup: async (
+    name: string,
+    email: string,
+    password: string,
+    role: string
+  ): Promise<{ user: User }> => {
     const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, role }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Signup failed');
+      throw new Error(error.error || "Signup failed");
     }
     return response.json();
   },
 
   login: async (email: string, password: string): Promise<{ user: User }> => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(error.error || "Login failed");
     }
     return response.json();
-  }
+  },
 };
 
 // Hostel API
 export const hostelApi = {
   getAll: async (): Promise<Hostel[]> => {
     const response = await fetch(`${API_BASE_URL}/hostels`, {
-      headers: getAuthHeaders()
+      headers: getAuthHeaders(),
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to fetch hostels' }));
-      throw new Error(error.error || `Failed to fetch hostels (${response.status})`);
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Failed to fetch hostels" }));
+      throw new Error(
+        error.error || `Failed to fetch hostels (${response.status})`
+      );
     }
     return response.json();
   },
 
-  search: async (params: { city?: string; maxRent?: number; facility?: string }): Promise<Hostel[]> => {
+  search: async (params: {
+    city?: string;
+    maxRent?: number;
+    facility?: string;
+  }): Promise<Hostel[]> => {
     const searchParams = new URLSearchParams();
-    if (params.city) searchParams.append('city', params.city);
-    if (params.maxRent) searchParams.append('maxRent', params.maxRent.toString());
-    if (params.facility) searchParams.append('facility', params.facility);
-    
-    const response = await fetch(`${API_BASE_URL}/hostels/search?${searchParams}`, {
-      headers: getAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Failed to search hostels');
+    if (params.city) searchParams.append("city", params.city);
+    if (params.maxRent)
+      searchParams.append("maxRent", params.maxRent.toString());
+    if (params.facility) searchParams.append("facility", params.facility);
+
+    const response = await fetch(
+      `${API_BASE_URL}/hostels/search?${searchParams}`,
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to search hostels");
     return response.json();
   },
 
   getById: async (id: number): Promise<Hostel> => {
     const response = await fetch(`${API_BASE_URL}/hostels/${id}`, {
-      headers: getAuthHeaders()
+      headers: getAuthHeaders(),
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Hostel not found' }));
-      throw new Error(error.error || 'Hostel not found');
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Hostel not found" }));
+      throw new Error(error.error || "Hostel not found");
     }
     return response.json();
   },
 
-  create: async (hostel: Omit<Hostel, 'id' | 'owner_id' | 'is_verified'>): Promise<{ hostel: Hostel }> => {
+  create: async (
+    hostel: Omit<Hostel, "id" | "owner_id" | "is_verified">
+  ): Promise<{ hostel: Hostel }> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/hostels`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ ...hostel, email: creds?.email, password: creds?.password })
+      body: JSON.stringify({
+        ...hostel,
+        email: creds?.email,
+        password: creds?.password,
+      }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to create hostel');
+      throw new Error(error.error || "Failed to create hostel");
     }
     return response.json();
   },
 
-  update: async (id: number, hostel: Partial<Hostel>): Promise<{ hostel: Hostel }> => {
+  update: async (
+    id: number,
+    hostel: Partial<Hostel>
+  ): Promise<{ hostel: Hostel }> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/hostels/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ ...hostel, email: creds?.email, password: creds?.password })
+      body: JSON.stringify({
+        ...hostel,
+        email: creds?.email,
+        password: creds?.password,
+      }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to update hostel');
+      throw new Error(error.error || "Failed to update hostel");
     }
     return response.json();
   },
@@ -155,15 +194,15 @@ export const hostelApi = {
   delete: async (id: number): Promise<void> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/hostels/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ email: creds?.email, password: creds?.password })
+      body: JSON.stringify({ email: creds?.email, password: creds?.password }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to delete hostel');
+      throw new Error(error.error || "Failed to delete hostel");
     }
-  }
+  },
 };
 
 // Admin API
@@ -171,85 +210,99 @@ export const adminApi = {
   getAllHostels: async (): Promise<Hostel[]> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/admin/hostels`, {
-      method: 'GET',
-      headers: getAuthHeaders()
+      method: "GET",
+      headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch hostels');
+    if (!response.ok) throw new Error("Failed to fetch hostels");
     return response.json();
   },
 
   verifyHostel: async (id: number): Promise<{ hostel: Hostel }> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/admin/verify-hostel/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ email: creds?.email, password: creds?.password })
+      body: JSON.stringify({ email: creds?.email, password: creds?.password }),
     });
-    if (!response.ok) throw new Error('Failed to verify hostel');
+    if (!response.ok) throw new Error("Failed to verify hostel");
     return response.json();
   },
 
   unverifyHostel: async (id: number): Promise<{ hostel: Hostel }> => {
     const creds = getCredentials();
-    const response = await fetch(`${API_BASE_URL}/admin/unverify-hostel/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ email: creds?.email, password: creds?.password })
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/admin/unverify-hostel/${id}`,
+      {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          email: creds?.email,
+          password: creds?.password,
+        }),
+      }
+    );
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to unverify hostel');
+      throw new Error(error.error || "Failed to unverify hostel");
     }
     return response.json();
-  }
+  },
 };
 
 // Review API
 export const reviewApi = {
-  create: async (hostelId: number, rating: number, comment: string): Promise<{ review: Review }> => {
+  create: async (
+    hostelId: number,
+    rating: number,
+    comment: string
+  ): Promise<{ review: Review }> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/reviews`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({
         email: creds?.email,
         password: creds?.password,
         hostel_id: hostelId,
         rating,
-        comment
-      })
+        comment,
+      }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to create review');
+      throw new Error(error.error || "Failed to create review");
     }
     return response.json();
   },
 
   getByHostel: async (hostelId: number): Promise<Review[]> => {
     const response = await fetch(`${API_BASE_URL}/reviews/hostel/${hostelId}`);
-    if (!response.ok) throw new Error('Failed to fetch reviews');
+    if (!response.ok) throw new Error("Failed to fetch reviews");
     return response.json();
   },
 
-  update: async (reviewId: number, rating?: number, comment?: string): Promise<{ review: Review }> => {
+  update: async (
+    reviewId: number,
+    rating?: number,
+    comment?: string
+  ): Promise<{ review: Review }> => {
     const creds = getCredentials();
     const body: any = {};
     if (rating !== undefined) body.rating = rating;
     if (comment !== undefined) body.comment = comment;
-    
+
     const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify({
         email: creds?.email,
         password: creds?.password,
-        ...body
-      })
+        ...body,
+      }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to update review');
+      throw new Error(error.error || "Failed to update review");
     }
     return response.json();
   },
@@ -257,29 +310,29 @@ export const reviewApi = {
   delete: async (reviewId: number): Promise<void> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: getAuthHeaders(),
       body: JSON.stringify({
         email: creds?.email,
-        password: creds?.password
-      })
+        password: creds?.password,
+      }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to delete review');
+      throw new Error(error.error || "Failed to delete review");
     }
-  }
+  },
 };
 
 export interface Enquiry {
   id: number;
   hostel_id: number;
   student_id: number;
-  type: 'enquiry' | 'schedule_visit';
+  type: "enquiry" | "schedule_visit";
   message?: string;
   scheduled_date?: string;
   reply?: string;
-  status: 'pending' | 'responded';
+  status: "pending" | "responded";
   created_at?: string;
   replied_at?: string;
   student_name?: string;
@@ -293,10 +346,15 @@ export interface Enquiry {
 
 // Enquiry API
 export const enquiryApi = {
-  create: async (hostelId: number, type: 'enquiry' | 'schedule_visit', message?: string, scheduledDate?: string): Promise<{ enquiry: any }> => {
+  create: async (
+    hostelId: number,
+    type: "enquiry" | "schedule_visit",
+    message?: string,
+    scheduledDate?: string
+  ): Promise<{ enquiry: any }> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/enquiries`, {
-      method: 'POST',
+      method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({
         email: creds?.email,
@@ -304,12 +362,12 @@ export const enquiryApi = {
         hostel_id: hostelId,
         type,
         message,
-        scheduled_date: scheduledDate
-      })
+        scheduled_date: scheduledDate,
+      }),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to send enquiry');
+      throw new Error(error.error || "Failed to send enquiry");
     }
     return response.json();
   },
@@ -317,25 +375,28 @@ export const enquiryApi = {
   getByOwner: async (): Promise<Enquiry[]> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/enquiries/owner`, {
-      method: 'GET',
-      headers: getAuthHeaders()
+      method: "GET",
+      headers: getAuthHeaders(),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch enquiries');
+      throw new Error(error.error || "Failed to fetch enquiries");
     }
     return response.json();
   },
 
   getByHostel: async (hostelId: number): Promise<Enquiry[]> => {
     const creds = getCredentials();
-    const response = await fetch(`${API_BASE_URL}/enquiries/hostel/${hostelId}`, {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/enquiries/hostel/${hostelId}`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+      }
+    );
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch enquiries');
+      throw new Error(error.error || "Failed to fetch enquiries");
     }
     return response.json();
   },
@@ -343,31 +404,37 @@ export const enquiryApi = {
   getByStudent: async (): Promise<Enquiry[]> => {
     const creds = getCredentials();
     const response = await fetch(`${API_BASE_URL}/enquiries/student`, {
-      method: 'GET',
-      headers: getAuthHeaders()
+      method: "GET",
+      headers: getAuthHeaders(),
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch enquiries');
+      throw new Error(error.error || "Failed to fetch enquiries");
     }
     return response.json();
   },
 
-  reply: async (enquiryId: number, reply: string): Promise<{ message: string; enquiry: Enquiry }> => {
+  reply: async (
+    enquiryId: number,
+    reply: string
+  ): Promise<{ message: string; enquiry: Enquiry }> => {
     const creds = getCredentials();
-    const response = await fetch(`${API_BASE_URL}/enquiries/${enquiryId}/reply`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        email: creds?.email,
-        password: creds?.password,
-        reply
-      })
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/enquiries/${enquiryId}/reply`,
+      {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          email: creds?.email,
+          password: creds?.password,
+          reply,
+        }),
+      }
+    );
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to send reply');
+      throw new Error(error.error || "Failed to send reply");
     }
     return response.json();
-  }
+  },
 };
