@@ -172,24 +172,51 @@ const getHostelById = async (req, res) => {
     const hostelId = req.params.id;
 
     try {
-        const hostel = await Hostel.findById(parseInt(hostelId));
+        console.log("🔍 Getting hostel by ID:", hostelId, "for user:", user.role, user.id);
+        
+        // Use direct query for reliability (same pattern as other working endpoints)
+        const [rows] = await db.query(
+            `SELECT h.*, u.name as owner_name, u.email as owner_email,
+                    COALESCE(u.contact_number, '') as owner_contact_number
+             FROM hostels h
+             JOIN users u ON h.owner_id = u.id
+             WHERE h.id = ?`,
+            [parseInt(hostelId)]
+        );
 
-        if (!hostel) {
+        if (!rows || rows.length === 0) {
+            console.log("❌ Hostel not found:", hostelId);
             return res.status(404).json({ error: "Hostel not found" });
         }
 
+        const hostel = rows[0];
+        console.log("✅ Found hostel:", hostel.name, "is_verified:", hostel.is_verified);
+
         // Role-based access control
         if (user.role === 'student' && hostel.is_verified !== 1) {
+            console.log("🚫 Student cannot view unverified hostel");
             return res.status(403).json({ error: "This hostel is not verified yet" });
         }
 
         if (user.role === 'owner' && hostel.owner_id !== user.id) {
+            console.log("🚫 Owner cannot view other's hostel");
             return res.status(403).json({ error: "You can only view your own hostels" });
         }
 
+        console.log("✅ Returning hostel data");
         res.json(hostel);
     } catch (err) {
-        return res.status(500).json({ error: "Database error", details: err.message });
+        console.error("❌ Error in getHostelById:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error SQL state:", err.sqlState);
+        console.error("Hostel ID was:", hostelId);
+        console.error("Stack:", err.stack);
+        return res.status(500).json({ 
+            error: "Database error", 
+            details: err.message,
+            code: err.code,
+            sqlState: err.sqlState
+        });
     }
 };
 
