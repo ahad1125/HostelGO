@@ -1,11 +1,9 @@
 // API configuration for HostelGo backend
-// const API_BASE_URL = 'http://localhost:5000';
+// Uses environment variable for deployment flexibility
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://hostelgo.up.railway.app";
 
-// API configuration for HostelGo backend (Vite env)
-const API_BASE_URL = import.meta.env.VITE_API_URL;
-
-if (!API_BASE_URL) {
-  console.error("VITE_API_URL is not defined");
+if (!import.meta.env.VITE_API_URL) {
+  console.warn("VITE_API_URL is not defined, using default Railway URL:", API_BASE_URL);
 }
 
 // Types

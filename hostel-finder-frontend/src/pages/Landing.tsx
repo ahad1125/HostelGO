@@ -3,6 +3,7 @@ import { Building2, Search, Shield, Users, Star, ArrowRight, CheckCircle } from 
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { PolicyDialogs } from "@/components/PolicyDialogs";
+import HostelCarousel from "@/components/HostelCarousel";
 
 const Landing = () => {
   const features = [
@@ -68,33 +69,7 @@ const Landing = () => {
             </div>
 
             <div className="relative">
-              <div className="bg-card border-2 border-border rounded-2xl overflow-hidden shadow-lg">
-                <img
-                  src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop&q=60"
-                  alt="Modern hostel room"
-                  className="w-full h-80 object-cover"
-                />
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="h-5 w-5 text-accent" />
-                    <span className="text-sm font-medium text-accent">Verified Hostel</span>
-                  </div>
-                  <h3 className="font-heading font-semibold text-xl mb-1">Gulberg Boys Hostel</h3>
-                  <p className="text-muted-foreground">Lahore • Rs 15,000/month</p>
-                </div>
-              </div>
-              {/* Floating card */}
-              <div className="absolute -bottom-6 -right-2 bg-card border-2 border-border rounded-xl p-4 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Star className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-2xl">4.8</p>
-                    <p className="text-sm text-muted-foreground">Average Rating</p>
-                  </div>
-                </div>
-              </div>
+              <HostelCarousel autoSlideInterval={10000} />
             </div>
           </div>
         </div>

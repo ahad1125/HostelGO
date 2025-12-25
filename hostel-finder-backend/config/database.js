@@ -1,16 +1,28 @@
 const mysql = require("mysql2/promise");
 
-// Railway MySQL configuration (NO FALLBACKS)
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
+// Railway MySQL configuration
+// Support both Railway auto-provided vars and custom vars
+const dbConfig = {
+    host: process.env.DB_HOST || process.env.MYSQLHOST,
+    user: process.env.DB_USER || process.env.MYSQLUSER,
+    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
+    database: process.env.DB_NAME || process.env.MYSQLDATABASE,
+    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+};
+
+// Log configuration (without password) for debugging
+console.log("🔧 Database Config:", {
+    host: dbConfig.host,
+    user: dbConfig.user,
+    database: dbConfig.database,
+    port: dbConfig.port,
+    hasPassword: !!dbConfig.password
 });
+
+const pool = mysql.createPool(dbConfig);
 
 // Initialize tables ONLY (no DB creation)
 async function initializeDatabase() {
@@ -108,7 +120,27 @@ async function initializeDatabase() {
     }
 }
 
-// Init immediately
-initializeDatabase().catch(() => process.exit(1));
+// Database ready promise - export this so server can wait
+let dbReady = false;
+const dbReadyPromise = initializeDatabase()
+    .then(() => {
+        dbReady = true;
+        console.log("✅ Database ready!");
+        return true;
+    })
+    .catch((err) => {
+        console.error("❌ Database initialization failed!");
+        console.error("Error details:", err.message);
+        console.error("Full error:", err);
+        console.error("\n💡 Check Railway environment variables:");
+        console.error("   - MYSQLHOST or DB_HOST");
+        console.error("   - MYSQLUSER or DB_USER");
+        console.error("   - MYSQLPASSWORD or DB_PASSWORD");
+        console.error("   - MYSQLDATABASE or DB_NAME");
+        console.error("   - MYSQLPORT or DB_PORT");
+        process.exit(1);
+    });
 
 module.exports = pool;
+module.exports.ready = dbReadyPromise;
+module.exports.isReady = () => dbReady;

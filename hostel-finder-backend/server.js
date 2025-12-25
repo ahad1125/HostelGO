@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const db = require("./config/database");
 
 // Import route modules
 const authRoutes = require("./routes/auth");
@@ -14,8 +13,38 @@ const app = express();
 // =====================
 // Middleware
 // =====================
+// CORS configuration for production (Vercel) and development
 app.use(cors({
-    origin: "*", // OK for now; restrict later when frontend is live
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // In development, allow all origins
+        if (process.env.NODE_ENV !== "production") {
+            return callback(null, true);
+        }
+        
+        // In production, allow Vercel domains and custom frontend URL
+        const allowedPatterns = [
+            /^https:\/\/.*\.vercel\.app$/,
+            process.env.FRONTEND_URL,
+        ].filter(Boolean);
+        
+        const isAllowed = allowedPatterns.some(pattern => {
+            if (pattern instanceof RegExp) {
+                return pattern.test(origin);
+            }
+            return origin === pattern;
+        });
+        
+        if (isAllowed || !origin) {
+            callback(null, true);
+        } else {
+            // For now, allow all in production too (can restrict later)
+            callback(null, true);
+        }
+    },
+    credentials: true,
 }));
 app.use(express.json());
 
@@ -65,9 +94,22 @@ app.use((err, req, res, next) => {
 
 // =====================
 // Start Server (Railway-safe)
+// Wait for database to be ready before starting
 // =====================
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+// Import database and wait for initialization
+const db = require("./config/database");
+
+// Wait for database to be ready before starting server
+db.ready
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+            console.log(`📡 API available at http://localhost:${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error("❌ Failed to start server - database not ready");
+        process.exit(1);
+    });
