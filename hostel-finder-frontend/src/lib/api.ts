@@ -99,6 +99,23 @@ export const authApi = {
 
 // Hostel API
 export const hostelApi = {
+  // Public endpoint - no authentication required (for landing page)
+  getPublic: async (): Promise<Hostel[]> => {
+    const response = await fetch(`${API_BASE_URL}/hostels/public`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Failed to fetch hostels" }));
+      throw new Error(
+        error.error || `Failed to fetch hostels (${response.status})`
+      );
+    }
+    return response.json();
+  },
+
+  // Authenticated endpoint - requires login
   getAll: async (): Promise<Hostel[]> => {
     const response = await fetch(`${API_BASE_URL}/hostels`, {
       headers: getAuthHeaders(),

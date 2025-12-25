@@ -21,18 +21,17 @@ const HostelCarousel = ({ autoSlideInterval = 10000 }: HostelCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch hostels
+  // Fetch hostels (using public endpoint - no auth required)
   useEffect(() => {
     const fetchHostels = async () => {
       try {
         setIsLoading(true);
-        const data = await hostelApi.getAll();
-        // Filter only verified hostels
-        const verifiedHostels = data.filter((h) => h.is_verified === 1);
-        setHostels(verifiedHostels);
+        // Use public endpoint that doesn't require authentication
+        const data = await hostelApi.getPublic();
+        setHostels(data);
       } catch (error) {
         console.error("Error fetching hostels for carousel:", error);
-        // If fetch fails (e.g., no auth), use empty array
+        // If fetch fails, use empty array (will show fallback card)
         setHostels([]);
       } finally {
         setIsLoading(false);
