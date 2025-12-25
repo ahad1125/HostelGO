@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   LogOut,
   User,
-  X
+  X,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,12 +27,14 @@ const Sidebar = ({ role, isOpen, onClose }: SidebarProps) => {
   const studentLinks = [
     { to: "/student/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/student/hostels", icon: Search, label: "Browse Hostels" },
+    { to: "/student/enquiries", icon: Mail, label: "Enquiries" },
   ];
 
   const ownerLinks = [
     { to: "/owner/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/owner/add-hostel", icon: Plus, label: "Add Hostel" },
     { to: "/owner/my-hostels", icon: Building2, label: "My Hostels" },
+    { to: "/owner/enquiries", icon: Mail, label: "Enquiries" },
   ];
 
   const adminLinks = [

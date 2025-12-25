@@ -1,4 +1,5 @@
-const db = require("../database");
+const Review = require("../models/Review");
+const Hostel = require("../models/Hostel");
 
 /**
  * REVIEW CONTROLLER
@@ -12,9 +13,14 @@ const db = require("../database");
  * Body: { hostel_id, rating, comment }
  * Only students can create reviews
  */
-const createReview = (req, res) => {
+const createReview = async (req, res) => {
     const user = req.user;
     const { hostel_id, rating, comment } = req.body;
+
+    // Only students can create reviews
+    if (user.role !== 'student') {
+        return res.status(403).json({ error: "Only students can create reviews" });
+    }
 
     // Validate required fields
     if (!hostel_id || !rating) {
@@ -28,11 +34,9 @@ const createReview = (req, res) => {
         return res.status(400).json({ error: "Rating must be between 1 and 5" });
     }
 
-    // Check if hostel exists and is verified (students can only review verified hostels)
-    db.get("SELECT * FROM hostels WHERE id = ?", [hostel_id], (err, hostel) => {
-        if (err) {
-            return res.status(500).json({ error: "Database error", details: err.message });
-        }
+    try {
+        // Check if hostel exists and is verified (students can only review verified hostels)
+        const hostel = await Hostel.findById(parseInt(hostel_id));
 
         if (!hostel) {
             return res.status(404).json({ error: "Hostel not found" });
@@ -42,28 +46,21 @@ const createReview = (req, res) => {
             return res.status(403).json({ error: "You can only review verified hostels" });
         }
 
-        // Insert new review
-        db.run(
-            "INSERT INTO reviews (rating, comment, hostel_id, student_id) VALUES (?, ?, ?, ?)",
-            [parseInt(rating), comment || '', hostel_id, user.id],
-            function(err) {
-                if (err) {
-                    return res.status(500).json({ error: "Failed to create review", details: err.message });
-                }
+        // Create new review
+        const review = await Review.create({
+            rating: parseInt(rating),
+            comment: comment || '',
+            hostel_id: parseInt(hostel_id),
+            student_id: user.id
+        });
 
-                res.status(201).json({
-                    message: "Review created successfully",
-                    review: {
-                        id: this.lastID,
-                        rating: parseInt(rating),
-                        comment: comment || '',
-                        hostel_id,
-                        student_id: user.id
-                    }
-                });
-            }
-        );
-    });
+        res.status(201).json({
+            message: "Review created successfully",
+            review
+        });
+    } catch (err) {
+        return res.status(500).json({ error: "Failed to create review", details: err.message });
+    }
 };
 
 /**
@@ -71,54 +68,119 @@ const createReview = (req, res) => {
  * GET /reviews/hostel/:hostelId
  * Anyone can view reviews
  */
-const getReviewsByHostel = (req, res) => {
+const getReviewsByHostel = async (req, res) => {
     const hostelId = req.params.hostelId;
 
-    // Get all reviews for this hostel with student names
-    db.all(
-        `SELECT r.id, r.rating, r.comment, r.hostel_id, r.student_id, u.name as student_name
-         FROM reviews r
-         JOIN users u ON r.student_id = u.id
-         WHERE r.hostel_id = ?
-         ORDER BY r.id DESC`,
-        [hostelId],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: "Database error", details: err.message });
-            }
-            res.json(rows);
-        }
-    );
+    try {
+        const reviews = await Review.findByHostel(parseInt(hostelId));
+        res.json(reviews);
+    } catch (err) {
+        return res.status(500).json({ error: "Database error", details: err.message });
+    }
 };
 
 /**
  * Get all reviews by a specific student
  * GET /reviews/student/:studentId
  */
-const getReviewsByStudent = (req, res) => {
+const getReviewsByStudent = async (req, res) => {
     const studentId = req.params.studentId;
 
-    db.all(
-        `SELECT r.id, r.rating, r.comment, r.hostel_id, r.student_id, h.name as hostel_name
-         FROM reviews r
-         JOIN hostels h ON r.hostel_id = h.id
-         WHERE r.student_id = ?
-         ORDER BY r.id DESC`,
-        [studentId],
-        (err, rows) => {
-            if (err) {
-                return res.status(500).json({ error: "Database error", details: err.message });
-            }
-            res.json(rows);
+    try {
+        const reviews = await Review.findByStudent(parseInt(studentId));
+        res.json(reviews);
+    } catch (err) {
+        return res.status(500).json({ error: "Database error", details: err.message });
+    }
+};
+
+/**
+ * Update a review
+ * PUT /reviews/:id
+ * Only the student who created the review can update it
+ */
+const updateReview = async (req, res) => {
+    const user = req.user;
+    const reviewId = req.params.id;
+    const { rating, comment } = req.body;
+
+    // Validate required fields
+    if (!rating && !comment) {
+        return res.status(400).json({ 
+            error: "At least one field (rating or comment) is required" 
+        });
+    }
+
+    // Validate rating range if provided
+    if (rating !== undefined && (isNaN(rating) || rating < 1 || rating > 5)) {
+        return res.status(400).json({ error: "Rating must be between 1 and 5" });
+    }
+
+    try {
+        // Check if review exists and belongs to user
+        const review = await Review.findById(parseInt(reviewId));
+
+        if (!review) {
+            return res.status(404).json({ error: "Review not found" });
         }
-    );
+
+        // Only the student who created the review can update it
+        if (review.student_id !== user.id) {
+            return res.status(403).json({ error: "You can only update your own reviews" });
+        }
+
+        // Build updates object
+        const updates = {};
+        if (rating !== undefined) updates.rating = rating;
+        if (comment !== undefined) updates.comment = comment;
+
+        // Update review
+        const updatedReview = await Review.updateById(parseInt(reviewId), updates);
+
+        res.json({
+            message: "Review updated successfully",
+            review: updatedReview
+        });
+    } catch (err) {
+        return res.status(500).json({ error: "Failed to update review", details: err.message });
+    }
+};
+
+/**
+ * Delete a review
+ * DELETE /reviews/:id
+ * Only the student who created the review can delete it
+ */
+const deleteReview = async (req, res) => {
+    const user = req.user;
+    const reviewId = req.params.id;
+
+    try {
+        // Check if review exists and belongs to user
+        const review = await Review.findById(parseInt(reviewId));
+
+        if (!review) {
+            return res.status(404).json({ error: "Review not found" });
+        }
+
+        // Only the student who created the review can delete it
+        if (review.student_id !== user.id) {
+            return res.status(403).json({ error: "You can only delete your own reviews" });
+        }
+
+        // Delete the review
+        await Review.deleteById(parseInt(reviewId));
+
+        res.json({ message: "Review deleted successfully" });
+    } catch (err) {
+        return res.status(500).json({ error: "Failed to delete review", details: err.message });
+    }
 };
 
 module.exports = {
     createReview,
     getReviewsByHostel,
-    getReviewsByStudent
+    getReviewsByStudent,
+    updateReview,
+    deleteReview
 };
-
-
-

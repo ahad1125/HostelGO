@@ -31,27 +31,53 @@ const StudentDashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        // Check if user has credentials
+        const storedUser = localStorage.getItem('hostelgo_user');
+        const storedPassword = localStorage.getItem('hostelgo_password');
+        
+        if (!storedUser || !storedPassword) {
+          toast({
+            title: "Authentication required",
+            description: "Please log in again to continue",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
+
         const data: ApiHostel[] = await hostelApi.getAll();
-        const transformed: HostelCardType[] = data
-          .filter((h) => h.is_verified === 1)
-          .map((hostel) => ({
-            id: hostel.id.toString(),
-            name: hostel.name,
-            city: hostel.city,
-            address: hostel.address,
-            rent: hostel.rent,
-            rating: 4.5, // default rating until backend supports it
-            facilities: hostel.facilities.split(",").map((f) => f.trim()).filter(Boolean),
-            image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
-            isVerified: hostel.is_verified === 1,
-          }));
+        // Backend already filters for verified hostels for students, so no need to filter again
+        const transformed: HostelCardType[] = data.map((hostel) => ({
+          id: hostel.id.toString(),
+          name: hostel.name || 'Unnamed Hostel',
+          city: hostel.city || 'Unknown',
+          address: hostel.address || 'Address not available',
+          rent: hostel.rent || 0,
+          rating: 4.5, // default rating until backend supports it
+          facilities: hostel.facilities ? hostel.facilities.split(",").map((f) => f.trim()).filter(Boolean) : [],
+          image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+          isVerified: hostel.is_verified === 1,
+        }));
         setHostels(transformed);
       } catch (error: any) {
-        toast({
-          title: "Error loading hostels",
-          description: error.message || "Failed to fetch hostels",
-          variant: "destructive",
-        });
+        console.error('Error fetching hostels:', error);
+        const errorMessage = error.message || "Failed to fetch hostels";
+        
+        // Check if it's an authentication error
+        if (errorMessage.includes('401') || errorMessage.includes('Invalid credentials') || errorMessage.includes('Authentication')) {
+          toast({
+            title: "Authentication failed",
+            description: "Please log in again",
+            variant: "destructive",
+          });
+          navigate("/login");
+        } else {
+          toast({
+            title: "Error loading hostels",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsLoading(false);
       }

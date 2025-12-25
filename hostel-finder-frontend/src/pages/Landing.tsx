@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Building2, Search, Shield, Users, Star, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
+import { PolicyDialogs } from "@/components/PolicyDialogs";
 
 const Landing = () => {
   const features = [
@@ -83,7 +84,7 @@ const Landing = () => {
                 </div>
               </div>
               {/* Floating card */}
-              <div className="absolute -bottom-6 -left-6 bg-card border-2 border-border rounded-xl p-4 shadow-lg">
+              <div className="absolute -bottom-6 -right-2 bg-card border-2 border-border rounded-xl p-4 shadow-lg">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <Star className="h-6 w-6 text-primary" />
@@ -231,17 +232,102 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-foreground text-background py-12 px-4">
+      <footer className="bg-foreground text-background py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-6 w-6" />
-              <span className="font-heading font-bold text-lg">HostelGo</span>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-6 w-6" />
+                <span className="font-heading font-bold text-lg">HostelGo</span>
+              </div>
+              <p className="text-background/70 text-sm">
+                Your trusted platform for finding verified student hostels across Pakistan.
+              </p>
             </div>
-            <p className="text-background/70 text-sm">
-              © 2024 HostelGo. 
-            </p>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-sm text-background/70">
+                <li>
+                  <Link to="/" className="hover:text-background transition-colors">Home</Link>
+                </li>
+                <li>
+                  <Link to="/signup" className="hover:text-background transition-colors">Sign Up</Link>
+                </li>
+                <li>
+                  <Link to="/login" className="hover:text-background transition-colors">Login</Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* For Users */}
+            <PolicyDialogs>
+              {(openPrivacy, openTerms, openAbout, openHowItWorks) => (
+                <div>
+                  <h4 className="font-semibold mb-4">For Users</h4>
+                  <ul className="space-y-2 text-sm text-background/70">
+                    <li>
+                      <Link to="/student/hostels" className="hover:text-background transition-colors">Browse Hostels</Link>
+                    </li>
+                    <li>
+                      <Link to="/owner/dashboard" className="hover:text-background transition-colors">List Your Hostel</Link>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={openHowItWorks}
+                        className="hover:text-background transition-colors cursor-pointer"
+                      >
+                        How It Works
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </PolicyDialogs>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <ul className="space-y-2 text-sm text-background/70">
+                <li>Email: support@hostelgo.pk</li>
+                <li>Phone: +92 300 1234567</li>
+                <li>Address: Lahore, Pakistan</li>
+              </ul>
+            </div>
           </div>
+
+          {/* Bottom Bar */}
+          <PolicyDialogs>
+            {(openPrivacy, openTerms, openAbout, openHowItWorks) => (
+              <div className="border-t border-background/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p className="text-background/70 text-sm">
+                  © 2024 HostelGo. All rights reserved.
+                </p>
+                <div className="flex gap-6 text-sm text-background/70">
+                  <button 
+                    onClick={openPrivacy}
+                    className="hover:text-background transition-colors cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>
+                  <button 
+                    onClick={openTerms}
+                    className="hover:text-background transition-colors cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>
+                  <button 
+                    onClick={openAbout}
+                    className="hover:text-background transition-colors cursor-pointer"
+                  >
+                    About Us
+                  </button>
+                </div>
+              </div>
+            )}
+          </PolicyDialogs>
         </div>
       </footer>
     </div>

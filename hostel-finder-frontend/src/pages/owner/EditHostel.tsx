@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, User } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -252,6 +252,22 @@ const EditHostel = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Owner Info */}
+            {hostel.owner_name && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-heading text-lg">Owner Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Owner:</span>
+                    <span className="font-medium">{hostel.owner_name}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Actions */}
             <Card>
               <CardContent className="p-6 space-y-3">

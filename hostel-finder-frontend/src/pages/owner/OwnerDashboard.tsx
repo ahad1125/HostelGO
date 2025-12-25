@@ -4,6 +4,7 @@ import { Plus, Building2, CheckCircle, Clock, TrendingUp } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import HostelCard, { Hostel as HostelCardType } from "@/components/HostelCard";
 import { hostelApi, Hostel as ApiHostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -133,7 +134,7 @@ const OwnerDashboard = () => {
       </div>
 
       {/* My Hostels */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-heading">My Hostels</CardTitle>
           <Link to="/owner/my-hostels">
@@ -167,6 +168,7 @@ const OwnerDashboard = () => {
           )}
         </CardContent>
       </Card>
+
     </DashboardLayout>
   );
 };

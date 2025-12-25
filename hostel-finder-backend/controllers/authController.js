@@ -1,4 +1,4 @@
-const db = require("../database");
+const User = require("../models/User");
 
 /**
  * AUTHENTICATION CONTROLLER
@@ -12,7 +12,7 @@ const db = require("../database");
  * POST /auth/signup
  * Body: { name, email, password, role }
  */
-const signup = (req, res) => {
+const signup = async (req, res) => {
     const { name, email, password, role } = req.body;
 
     // Validate required fields
@@ -29,38 +29,30 @@ const signup = (req, res) => {
         });
     }
 
-    // Check if email already exists
-    db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: "Database error", details: err.message });
-        }
+    try {
+        // Check if email already exists
+        const existingUser = await User.findByEmail(email);
 
-        if (row) {
+        if (existingUser) {
             return res.status(400).json({ error: "Email already registered" });
         }
 
-        // Insert new user (password stored as plain text for prototype)
-        db.run(
-            "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-            [name, email, password, role],
-            function(err) {
-                if (err) {
-                    return res.status(500).json({ error: "Failed to create user", details: err.message });
-                }
+        // Create new user (password stored as plain text for prototype)
+        const user = await User.create({ name, email, password, role });
 
-                // Return success with user ID
-                res.status(201).json({
-                    message: "User created successfully",
-                    user: {
-                        id: this.lastID,
-                        name,
-                        email,
-                        role
-                    }
-                });
+        // Return success with user ID
+        res.status(201).json({
+            message: "User created successfully",
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
             }
-        );
-    });
+        });
+    } catch (err) {
+        return res.status(500).json({ error: "Database error", details: err.message });
+    }
 };
 
 /**
@@ -69,7 +61,7 @@ const signup = (req, res) => {
  * Body: { email, password }
  * Note: No JWT/sessions - just returns user info if credentials match
  */
-const login = (req, res) => {
+const login = async (req, res) => {
     const { email, password } = req.body;
 
     // Validate required fields
@@ -77,32 +69,30 @@ const login = (req, res) => {
         return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find user by email and password (plain text comparison for prototype)
-    db.get(
-        "SELECT id, name, email, role FROM users WHERE email = ? AND password = ?",
-        [email, password],
-        (err, row) => {
-            if (err) {
-                return res.status(500).json({ error: "Database error", details: err.message });
-            }
+    try {
+        // Find user by email
+        const user = await User.findByEmail(email);
 
-            if (!row) {
-                return res.status(401).json({ error: "Invalid email or password" });
-            }
-
-            // Return user info (without password)
-            res.json({
-                message: "Login successful",
-                user: row
-            });
+        if (!user || user.password !== password) {
+            return res.status(401).json({ error: "Invalid email or password" });
         }
-    );
+
+        // Return user info (without password)
+        res.json({
+            message: "Login successful",
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (err) {
+        return res.status(500).json({ error: "Database error", details: err.message });
+    }
 };
 
 module.exports = {
     signup,
     login
 };
-
-
-

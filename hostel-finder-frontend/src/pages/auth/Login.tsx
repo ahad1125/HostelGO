@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Building2, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { PolicyDialogs } from "@/components/PolicyDialogs";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -52,11 +53,21 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12 relative">
+      {/* Back to Home Button - Top Left */}
+      <Link 
+        to="/" 
+        className="absolute top-4 left-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors z-10"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Home
+      </Link>
+
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4">
+          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <Building2 className="h-10 w-10 text-primary" />
+            <span className="font-heading font-bold text-xl">HostelGo</span>
           </Link>
           <CardTitle className="font-heading text-2xl">Welcome Back</CardTitle>
           <CardDescription>
@@ -128,11 +139,11 @@ const Login = () => {
           </div>
 
           {/* Security & access info */}
-<div className="mt-6 p-4 bg-muted rounded-lg">
-  <p className="text-xs text-center text-muted-foreground">
-    Your login information is securely processed to ensure safe and reliable access to your account.
-  </p>
-</div>
+          <div className="mt-6 p-4 bg-muted rounded-lg">
+            <p className="text-xs text-center text-muted-foreground">
+              Your login information is securely processed to ensure safe and reliable access to your account.
+            </p>
+          </div>
 
         </CardContent>
       </Card>

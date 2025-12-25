@@ -84,11 +84,11 @@ const HostelList = () => {
   // Transform API hostel to HostelCard format
   const transformHostel = (hostel: Hostel) => ({
     id: hostel.id.toString(),
-    name: hostel.name,
-    address: hostel.address,
-    city: hostel.city,
-    rent: hostel.rent,
-    facilities: hostel.facilities.split(', '),
+    name: hostel.name || 'Unnamed Hostel',
+    address: hostel.address || 'Address not available',
+    city: hostel.city || 'Unknown',
+    rent: hostel.rent || 0,
+    facilities: hostel.facilities ? hostel.facilities.split(', ').filter(Boolean) : [],
     rating: 4.5, // Default rating since API doesn't provide it
     image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
     isVerified: hostel.is_verified === 1,

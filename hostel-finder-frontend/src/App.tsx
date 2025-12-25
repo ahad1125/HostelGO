@@ -14,12 +14,14 @@ import Signup from "./pages/auth/Signup";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import HostelList from "./pages/student/HostelList";
 import HostelDetail from "./pages/student/HostelDetail";
+import StudentEnquiries from "./pages/student/StudentEnquiries";
 
 // Owner Pages
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import AddHostel from "./pages/owner/AddHostel";
 import MyHostels from "./pages/owner/MyHostels";
 import EditHostel from "./pages/owner/EditHostel";
+import OwnerEnquiries from "./pages/owner/OwnerEnquiries";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -47,12 +49,14 @@ const App = () => (
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/student/hostels" element={<HostelList />} />
             <Route path="/student/hostel/:id" element={<HostelDetail />} />
+            <Route path="/student/enquiries" element={<StudentEnquiries />} />
 
             {/* Owner Routes */}
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
             <Route path="/owner/add-hostel" element={<AddHostel />} />
             <Route path="/owner/my-hostels" element={<MyHostels />} />
             <Route path="/owner/edit-hostel/:id" element={<EditHostel />} />
+            <Route path="/owner/enquiries" element={<OwnerEnquiries />} />
 
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />

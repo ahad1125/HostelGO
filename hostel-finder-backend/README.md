@@ -1,6 +1,6 @@
 # Hostel Finder Backend API
 
-A RESTful backend API for a Hostel Search and Management System built with Node.js, Express.js, and SQLite.
+A RESTful backend API for a Hostel Search and Management System built with Node.js, Express.js, and MySQL.
 
 ## 📋 Project Overview
 
@@ -13,7 +13,8 @@ This is a backend prototype for a university project that allows:
 
 - **Node.js** - Runtime environment
 - **Express.js** - Web framework
-- **SQLite** - Database (single `.db` file)
+- **MySQL** - Relational database
+- **mysql2** - MySQL client for Node.js
 - **CORS** - Cross-origin resource sharing
 
 ## 📁 Project Structure
@@ -23,7 +24,6 @@ hostel-finder-backend/
 ├── server.js                 # Main server file
 ├── database.js               # Database connection and schema
 ├── package.json             # Dependencies and scripts
-├── hostel.db                # SQLite database file (auto-created)
 │
 ├── controllers/             # Business logic
 │   ├── authController.js    # Authentication (signup, login)
@@ -46,22 +46,85 @@ hostel-finder-backend/
 ### Prerequisites
 - Node.js (v14 or higher)
 - npm (comes with Node.js)
+- MySQL Server (v5.7 or higher, or MariaDB 10.2+)
 
-### Steps
+### MySQL Setup
+
+1. **Install MySQL:**
+   - **Windows:** Download from [MySQL Official Website](https://dev.mysql.com/downloads/mysql/)
+   - **macOS:** `brew install mysql` or download from MySQL website
+   - **Linux:** `sudo apt-get install mysql-server` (Ubuntu/Debian) or `sudo yum install mysql-server` (CentOS/RHEL)
+
+2. **Start MySQL Service:**
+   - **Windows:** MySQL should start automatically, or use Services app
+   - **macOS:** `brew services start mysql`
+   - **Linux:** `sudo systemctl start mysql`
+
+3. **Create MySQL User (Optional but Recommended):**
+   ```sql
+   CREATE USER 'hostel_user'@'localhost' IDENTIFIED BY 'your_password';
+   GRANT ALL PRIVILEGES ON *.* TO 'hostel_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+### Application Setup
 
 1. **Install dependencies:**
    ```bash
+   cd hostel-finder-backend
    npm install
    ```
 
-2. **Start the server:**
+2. **Configure Database Connection:**
+   
+   You can configure the database connection in two ways:
+   
+   **Option 1: Environment Variables (Recommended)**
+   
+   Create a `.env` file in the `hostel-finder-backend` directory:
+   ```env
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=your_mysql_password
+   DB_NAME=hostel_finder
+   ```
+   
+   Then install `dotenv` package:
+   ```bash
+   npm install dotenv
+   ```
+   
+   And add this at the top of `database.js`:
+   ```javascript
+   require('dotenv').config();
+   ```
+   
+   **Option 2: Direct Configuration**
+   
+   Edit `database.js` and update the `dbConfig` object:
+   ```javascript
+   const dbConfig = {
+       host: "localhost",
+       user: "root",              // Your MySQL username
+       password: "your_password",  // Your MySQL password
+       database: "hostel_finder",  // Database name
+       // ...
+   };
+   ```
+
+3. **Start the server:**
    ```bash
    npm start
    ```
    
-   The server will start on `http://localhost:5000`
+   The server will:
+   - Connect to MySQL
+   - Create the database if it doesn't exist
+   - Create all necessary tables
+   - Seed initial data (if database is empty)
+   - Start on `http://localhost:5000`
 
-3. **Verify it's running:**
+4. **Verify it's running:**
    ```bash
    curl http://localhost:5000
    ```
@@ -72,34 +135,34 @@ hostel-finder-backend/
 ### Tables
 
 1. **users** - User accounts
-   - `id` (PRIMARY KEY)
-   - `name` (TEXT)
-   - `email` (TEXT, UNIQUE)
-   - `password` (TEXT) - *Plain text for prototype*
-   - `role` (TEXT) - *'student', 'owner', or 'admin'*
+   - `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+   - `name` (VARCHAR(255))
+   - `email` (VARCHAR(255), UNIQUE)
+   - `password` (VARCHAR(255)) - *Plain text for prototype*
+   - `role` (ENUM) - *'student', 'owner', or 'admin'*
 
 2. **hostels** - Hostel listings
-   - `id` (PRIMARY KEY)
-   - `name` (TEXT)
+   - `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+   - `name` (VARCHAR(255))
    - `address` (TEXT)
-   - `city` (TEXT)
-   - `rent` (INTEGER)
+   - `city` (VARCHAR(255))
+   - `rent` (INT)
    - `facilities` (TEXT)
-   - `owner_id` (INTEGER, FOREIGN KEY → users.id)
-   - `is_verified` (INTEGER) - *0 = unverified, 1 = verified*
+   - `owner_id` (INT, FOREIGN KEY → users.id)
+   - `is_verified` (TINYINT(1)) - *0 = unverified, 1 = verified*
 
 3. **reviews** - Student reviews
-   - `id` (PRIMARY KEY)
-   - `rating` (INTEGER, 1-5)
+   - `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+   - `rating` (INT, CHECK 1-5)
    - `comment` (TEXT)
-   - `hostel_id` (INTEGER, FOREIGN KEY → hostels.id)
-   - `student_id` (INTEGER, FOREIGN KEY → users.id)
+   - `hostel_id` (INT, FOREIGN KEY → hostels.id)
+   - `student_id` (INT, FOREIGN KEY → users.id)
 
 4. **bookings** - Booking records
-   - `id` (PRIMARY KEY)
-   - `hostel_id` (INTEGER, FOREIGN KEY → hostels.id)
-   - `student_id` (INTEGER, FOREIGN KEY → users.id)
-   - `status` (TEXT) - *'pending', 'confirmed', 'cancelled'*
+   - `id` (INT, PRIMARY KEY, AUTO_INCREMENT)
+   - `hostel_id` (INT, FOREIGN KEY → hostels.id)
+   - `student_id` (INT, FOREIGN KEY → users.id)
+   - `status` (ENUM) - *'pending', 'confirmed', 'cancelled'*
 
 ## 🔐 Authentication
 
@@ -546,11 +609,13 @@ curl -X DELETE http://localhost:5000/hostels/1 \
 
 2. **Authentication:** No JWT or sessions. Each request requires email/password in the body.
 
-3. **Database:** SQLite database file (`hostel.db`) is created automatically on first run.
+3. **Database:** MySQL database and tables are created automatically on first run. Make sure MySQL is running before starting the server.
 
 4. **CORS:** CORS is enabled for all origins. Adjust in production.
 
 5. **Error Handling:** All endpoints return appropriate HTTP status codes and error messages.
+
+6. **Connection Pooling:** The application uses MySQL connection pooling for better performance.
 
 ---
 
@@ -573,6 +638,8 @@ curl -X DELETE http://localhost:5000/hostels/1 \
 
 6. **Middleware:** How authentication and role checking works.
 
+7. **MySQL vs SQLite:** Explain the benefits of using MySQL (better for production, concurrent connections, etc.)
+
 ---
 
 ## 🐛 Troubleshooting
@@ -581,14 +648,36 @@ curl -X DELETE http://localhost:5000/hostels/1 \
 - Check if port 5000 is already in use
 - Ensure Node.js is installed: `node --version`
 - Install dependencies: `npm install`
+- **Ensure MySQL is running:** Check MySQL service status
 
-### Database errors
-- Delete `hostel.db` and restart server (will recreate tables)
-- Check file permissions
+### Database connection errors
+- Verify MySQL is installed and running
+- Check database credentials in `database.js` or `.env` file
+- Ensure MySQL user has proper permissions
+- Try connecting manually: `mysql -u root -p`
+- Check if database name is correct
 
 ### Authentication fails
 - Ensure email and password are correct
 - Check that user exists in database
+- Verify database connection is working
+
+### Table creation errors
+- Check MySQL user permissions
+- Ensure database exists or can be created
+- Check MySQL error logs
+
+---
+
+## 🔄 Migration from SQLite to MySQL
+
+This project has been migrated from SQLite to MySQL. Key changes:
+
+1. **Database Driver:** Changed from `sqlite3` to `mysql2`
+2. **Query Syntax:** Updated to MySQL syntax (AUTO_INCREMENT, ENUM, etc.)
+3. **Async/Await:** Converted callback-based queries to promise-based
+4. **Connection Pooling:** Using MySQL connection pool for better performance
+5. **Schema:** Updated data types (TEXT → VARCHAR/TEXT, INTEGER → INT, etc.)
 
 ---
 
@@ -604,5 +693,5 @@ This is an academic project prototype.
 - Simple patterns used for beginner understanding
 - No advanced frameworks or patterns
 - Easy to explain in viva/presentation
-
-
+- Uses async/await for cleaner code
+- MySQL connection pooling for scalability

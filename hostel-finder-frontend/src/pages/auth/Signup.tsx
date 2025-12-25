@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Building2, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { PolicyDialogs } from "@/components/PolicyDialogs";
 
 type UserRole = "student" | "owner";
 
@@ -80,11 +81,21 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12 relative">
+      {/* Back to Home Button - Top Left */}
+      <Link 
+        to="/" 
+        className="absolute top-4 left-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors z-10"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Home
+      </Link>
+
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4">
+          <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <Building2 className="h-10 w-10 text-primary" />
+            <span className="font-heading font-bold text-xl">HostelGo</span>
           </Link>
           <CardTitle className="font-heading text-2xl">Create Account</CardTitle>
           <CardDescription>
@@ -177,15 +188,31 @@ const Signup = () => {
               />
             </div>
 
-            <div className="flex items-start gap-2">
-              <input type="checkbox" id="terms" className="rounded border-border mt-1" required />
-              <label htmlFor="terms" className="text-sm text-muted-foreground">
-                I agree to the{" "}
-                <a href="#" className="text-primary hover:underline">Terms of Service</a>
-                {" "}and{" "}
-                <a href="#" className="text-primary hover:underline">Privacy Policy</a>
-              </label>
-            </div>
+            <PolicyDialogs>
+              {(openPrivacy, openTerms, openAbout) => (
+                <div className="flex items-start gap-2">
+                  <input type="checkbox" id="terms" className="rounded border-border mt-1" required />
+                  <label htmlFor="terms" className="text-sm text-muted-foreground">
+                    I agree to the{" "}
+                    <button 
+                      type="button"
+                      onClick={openTerms}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Terms of Service
+                    </button>
+                    {" "}and{" "}
+                    <button 
+                      type="button"
+                      onClick={openPrivacy}
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Privacy Policy
+                    </button>
+                  </label>
+                </div>
+              )}
+            </PolicyDialogs>
 
             <Button type="submit" className="w-full" disabled={!formData.role || isLoading}>
               {isLoading ? (
@@ -208,10 +235,11 @@ const Signup = () => {
 
           {/* Backend connection note */}
           <div className="mt-6 p-4 bg-muted rounded-lg">
-  <p className="text-xs text-center text-muted-foreground">
-    Your login information is securely processed to ensure safe and reliable access to your account.
-  </p>
-</div>
+            <p className="text-xs text-center text-muted-foreground">
+              Your login information is securely processed to ensure safe and reliable access to your account.
+            </p>
+          </div>
+
         </CardContent>
       </Card>
     </div>

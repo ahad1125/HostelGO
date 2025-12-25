@@ -1,4 +1,4 @@
-const db = require("../database");
+const User = require("../models/User");
 
 /**
  * AUTHENTICATION MIDDLEWARE
@@ -14,7 +14,7 @@ const db = require("../database");
  * 3. Request body (email, password) - for POST/PUT requests
  * Attaches user info to req.user if authentication succeeds
  */
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
     // Try to get credentials from headers first (most RESTful)
     let email = req.headers['x-user-email'] || req.headers['X-User-Email'];
     let password = req.headers['x-user-password'] || req.headers['X-User-Password'];
@@ -38,24 +38,25 @@ const authenticate = (req, res, next) => {
         });
     }
 
-    // Find user by email and password
-    db.get(
-        "SELECT id, name, email, role FROM users WHERE email = ? AND password = ?",
-        [email, password],
-        (err, row) => {
-            if (err) {
-                return res.status(500).json({ error: "Database error", details: err.message });
-            }
+    try {
+        // Find user by email
+        const user = await User.findByEmail(email);
 
-            if (!row) {
-                return res.status(401).json({ error: "Invalid credentials" });
-            }
-
-            // Attach user info to request object
-            req.user = row;
-            next();
+        if (!user || user.password !== password) {
+            return res.status(401).json({ error: "Invalid credentials" });
         }
-    );
+
+        // Attach user info to request object (without password)
+        req.user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        };
+        next();
+    } catch (err) {
+        return res.status(500).json({ error: "Database error", details: err.message });
+    }
 };
 
 /**
@@ -86,5 +87,3 @@ module.exports = {
     authenticate,
     requireRole
 };
-
-

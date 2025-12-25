@@ -3,9 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "start": "concurrently \"npm run dev --prefix hostel-finder-frontend\" \"npm start --prefix hostel-finder-backend\"",
+    "install:all": "npm install && npm install --prefix hostel-finder-backend && npm install --prefix hostel-finder-frontend",
+    "postinstall": "npm install --prefix hostel-finder-backend && npm install --prefix hostel-finder-frontend",
+    "start": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\" \"npm start --prefix hostel-finder-backend\" \"npm run dev --prefix hostel-finder-frontend\"",
     "start:frontend": "npm run dev --prefix hostel-finder-frontend",
-    "start:backend": "npm start --prefix hostel-finder-backend"
+    "start:backend": "npm start --prefix hostel-finder-backend",
+    "build": "npm run build --prefix hostel-finder-frontend"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

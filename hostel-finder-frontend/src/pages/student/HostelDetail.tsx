@@ -15,7 +15,10 @@ import {
   Droplets,
   Zap,
   BookOpen,
-  Loader2
+  Loader2,
+  Edit,
+  Trash2,
+  User
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -23,7 +26,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { hostelApi, reviewApi, Hostel, Review } from "@/lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { hostelApi, reviewApi, enquiryApi, Hostel, Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +66,13 @@ const HostelDetail = () => {
     comment: ""
   });
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [showEnquiryDialog, setShowEnquiryDialog] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [enquiryMessage, setEnquiryMessage] = useState("");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [isSubmittingEnquiry, setIsSubmittingEnquiry] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -90,11 +109,20 @@ const HostelDetail = () => {
     setIsSubmittingReview(true);
     
     try {
-      await reviewApi.create(parseInt(id!), reviewForm.rating, reviewForm.comment);
-      toast({
-        title: "Review submitted!",
-        description: "Thank you for your feedback",
-      });
+      if (editingReview) {
+        await reviewApi.update(editingReview.id, reviewForm.rating, reviewForm.comment);
+        toast({
+          title: "Review updated!",
+          description: "Your review has been updated",
+        });
+        setEditingReview(null);
+      } else {
+        await reviewApi.create(parseInt(id!), reviewForm.rating, reviewForm.comment);
+        toast({
+          title: "Review submitted!",
+          description: "Thank you for your feedback",
+        });
+      }
       setReviewForm({ rating: 5, comment: "" });
       setShowReviewForm(false);
       // Refresh reviews
@@ -102,12 +130,140 @@ const HostelDetail = () => {
       setReviews(updatedReviews);
     } catch (error: any) {
       toast({
-        title: "Failed to submit review",
+        title: editingReview ? "Failed to update review" : "Failed to submit review",
         description: error.message || "Please try again",
         variant: "destructive",
       });
     } finally {
       setIsSubmittingReview(false);
+    }
+  };
+
+  const handleEditReview = (review: Review) => {
+    setEditingReview(review);
+    setReviewForm({ rating: review.rating, comment: review.comment });
+    setShowReviewForm(true);
+  };
+
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+    
+    try {
+      await reviewApi.delete(reviewId);
+      toast({
+        title: "Review deleted",
+        description: "Your review has been removed",
+      });
+      // Refresh reviews
+      const updatedReviews = await reviewApi.getByHostel(parseInt(id!));
+      setReviews(updatedReviews);
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete review",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCallNow = () => {
+    // Simplified: Always send email instead of calling
+    if (hostel?.owner_email) {
+      const subject = encodeURIComponent(`Inquiry about ${hostel.name}`);
+      const body = encodeURIComponent(`Hello,\n\nI am interested in learning more about ${hostel.name} located at ${hostel.address}, ${hostel.city}.\n\nPlease contact me at your earliest convenience.\n\nThank you!`);
+      window.location.href = `mailto:${hostel.owner_email}?subject=${subject}&body=${body}`;
+      toast({
+        title: "Opening email",
+        description: `Email client will open to contact ${hostel.owner_email}`,
+      });
+    } else {
+      toast({
+        title: "Contact unavailable",
+        description: "Owner email information is not available",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendEnquiry = async () => {
+    if (!user || user.role !== 'student') {
+      toast({
+        title: "Authentication required",
+        description: "Please log in as a student to send enquiries",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!enquiryMessage.trim()) {
+      toast({
+        title: "Message required",
+        description: "Please enter your enquiry message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingEnquiry(true);
+    try {
+      await enquiryApi.create(parseInt(id!), 'enquiry', enquiryMessage);
+      toast({
+        title: "Enquiry sent!",
+        description: "The hostel owner will be notified",
+      });
+      setShowEnquiryDialog(false);
+      setEnquiryMessage("");
+    } catch (error: any) {
+      console.error('Enquiry error:', error);
+      toast({
+        title: "Failed to send enquiry",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingEnquiry(false);
+    }
+  };
+
+  const handleScheduleVisit = async () => {
+    if (!user || user.role !== 'student') {
+      toast({
+        title: "Authentication required",
+        description: "Please log in as a student to schedule visits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!scheduleDate || !scheduleTime) {
+      toast({
+        title: "Date and time required",
+        description: "Please select both date and time for your visit",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const scheduledDateTime = `${scheduleDate}T${scheduleTime}:00`;
+    setIsSubmittingEnquiry(true);
+    try {
+      await enquiryApi.create(parseInt(id!), 'schedule_visit', `Scheduled visit on ${scheduleDate} at ${scheduleTime}`, scheduledDateTime);
+      toast({
+        title: "Visit scheduled!",
+        description: "The hostel owner will be notified of your visit",
+      });
+      setShowScheduleDialog(false);
+      setScheduleDate("");
+      setScheduleTime("");
+    } catch (error: any) {
+      console.error('Schedule visit error:', error);
+      toast({
+        title: "Failed to schedule visit",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingEnquiry(false);
     }
   };
 
@@ -134,7 +290,7 @@ const HostelDetail = () => {
     );
   }
 
-  const facilities = hostel.facilities.split(', ');
+  const facilities = hostel.facilities ? hostel.facilities.split(', ').filter(Boolean) : [];
 
   return (
     <DashboardLayout role="student" title={hostel.name} subtitle={hostel.city}>
@@ -162,10 +318,16 @@ const HostelDetail = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="font-heading text-2xl mb-2">{hostel.name}</CardTitle>
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <MapPin className="h-4 w-4" />
                     <span>{hostel.address}, {hostel.city}</span>
                   </div>
+                  {hostel.owner_name && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span>Owner: <span className="font-medium text-foreground">{hostel.owner_name}</span></span>
+                    </div>
+                  )}
                 </div>
                 {hostel.is_verified === 1 && (
                   <Badge className="bg-accent text-accent-foreground flex items-center gap-1">
@@ -206,15 +368,35 @@ const HostelDetail = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading">Student Reviews</CardTitle>
-              <Button onClick={() => setShowReviewForm(!showReviewForm)}>
-                {showReviewForm ? "Cancel" : "Write Review"}
-              </Button>
+              {!showReviewForm && user && user.role === 'student' && (
+                <Button onClick={() => {
+                  setEditingReview(null);
+                  setReviewForm({ rating: 5, comment: "" });
+                  setShowReviewForm(true);
+                }}>
+                  Write Review
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {/* Review Form */}
-              {showReviewForm && (
+              {showReviewForm && user && user.role === 'student' && (
                 <form onSubmit={handleSubmitReview} className="mb-6 p-4 bg-muted rounded-lg">
-                  <h4 className="font-semibold mb-4">Write Your Review</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold">{editingReview ? "Edit Your Review" : "Write Your Review"}</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowReviewForm(false);
+                        setEditingReview(null);
+                        setReviewForm({ rating: 5, comment: "" });
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                   
                   <div className="mb-4">
                     <Label className="mb-2 block">Rating</Label>
@@ -283,6 +465,26 @@ const HostelDetail = () => {
                             </div>
                           </div>
                         </div>
+                        {user && review.student_id === user.id && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditReview(review)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <p className="text-muted-foreground">{review.comment}</p>
                     </div>
@@ -301,15 +503,23 @@ const HostelDetail = () => {
               <CardTitle className="font-heading text-lg">Contact Hostel</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button className="w-full gap-2">
-                <Phone className="h-4 w-4" />
-                Call Now
+              <Button className="w-full gap-2" onClick={handleCallNow}>
+                <Mail className="h-4 w-4" />
+                Send Email
               </Button>
-              <Button variant="outline" className="w-full gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full gap-2"
+                onClick={() => setShowEnquiryDialog(true)}
+              >
                 <Mail className="h-4 w-4" />
                 Send Inquiry
               </Button>
-              <Button variant="outline" className="w-full gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full gap-2"
+                onClick={() => setShowScheduleDialog(true)}
+              >
                 <Calendar className="h-4 w-4" />
                 Schedule Visit
               </Button>
@@ -323,6 +533,12 @@ const HostelDetail = () => {
             </CardHeader>
             <CardContent>
               <dl className="space-y-3 text-sm">
+                {hostel.owner_name && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">Owner</dt>
+                    <dd className="font-medium">{hostel.owner_name}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Type</dt>
                   <dd className="font-medium">Paying Guest</dd>
@@ -344,6 +560,105 @@ const HostelDetail = () => {
           </Card>
         </div>
       </div>
+
+      {/* Enquiry Dialog */}
+      <Dialog open={showEnquiryDialog} onOpenChange={setShowEnquiryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Enquiry</DialogTitle>
+            <DialogDescription>
+              Send a message to the hostel owner about this property
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="enquiry-message">Your Message</Label>
+              <Textarea
+                id="enquiry-message"
+                placeholder="Ask about availability, facilities, or any other questions..."
+                value={enquiryMessage}
+                onChange={(e) => setEnquiryMessage(e.target.value)}
+                rows={4}
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowEnquiryDialog(false);
+              setEnquiryMessage("");
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendEnquiry} disabled={isSubmittingEnquiry || !enquiryMessage.trim()}>
+              {isSubmittingEnquiry ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Enquiry"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Visit Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule a Visit</DialogTitle>
+            <DialogDescription>
+              Schedule a time to visit this hostel
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="visit-date">Date</Label>
+              <Input
+                id="visit-date"
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="mt-2"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="visit-time">Time</Label>
+              <Input
+                id="visit-time"
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="mt-2"
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowScheduleDialog(false);
+              setScheduleDate("");
+              setScheduleTime("");
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleScheduleVisit} disabled={isSubmittingEnquiry || !scheduleDate || !scheduleTime}>
+              {isSubmittingEnquiry ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                "Schedule Visit"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

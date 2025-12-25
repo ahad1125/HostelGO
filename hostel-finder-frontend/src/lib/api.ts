@@ -18,6 +18,10 @@ export interface Hostel {
   facilities: string;
   owner_id: number;
   is_verified: number;
+  owner_name?: string;
+  owner_email?: string;
+  owner_contact_number?: string;
+  contact_number?: string;
 }
 
 export interface Review {
@@ -43,7 +47,10 @@ const getCredentials = () => {
 // Helper to add auth headers
 const getAuthHeaders = (): HeadersInit => {
   const creds = getCredentials();
-  if (!creds) return { 'Content-Type': 'application/json' };
+  if (!creds || !creds.email || !creds.password) {
+    console.warn('No credentials found for API request');
+    return { 'Content-Type': 'application/json' };
+  }
   return {
     'Content-Type': 'application/json',
     'X-User-Email': creds.email,
@@ -86,7 +93,10 @@ export const hostelApi = {
     const response = await fetch(`${API_BASE_URL}/hostels`, {
       headers: getAuthHeaders()
     });
-    if (!response.ok) throw new Error('Failed to fetch hostels');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Failed to fetch hostels' }));
+      throw new Error(error.error || `Failed to fetch hostels (${response.status})`);
+    }
     return response.json();
   },
 
@@ -107,7 +117,10 @@ export const hostelApi = {
     const response = await fetch(`${API_BASE_URL}/hostels/${id}`, {
       headers: getAuthHeaders()
     });
-    if (!response.ok) throw new Error('Hostel not found');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Hostel not found' }));
+      throw new Error(error.error || 'Hostel not found');
+    }
     return response.json();
   },
 
@@ -183,7 +196,10 @@ export const adminApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ email: creds?.email, password: creds?.password })
     });
-    if (!response.ok) throw new Error('Failed to unverify hostel');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to unverify hostel');
+    }
     return response.json();
   }
 };
@@ -213,6 +229,145 @@ export const reviewApi = {
   getByHostel: async (hostelId: number): Promise<Review[]> => {
     const response = await fetch(`${API_BASE_URL}/reviews/hostel/${hostelId}`);
     if (!response.ok) throw new Error('Failed to fetch reviews');
+    return response.json();
+  },
+
+  update: async (reviewId: number, rating?: number, comment?: string): Promise<{ review: Review }> => {
+    const creds = getCredentials();
+    const body: any = {};
+    if (rating !== undefined) body.rating = rating;
+    if (comment !== undefined) body.comment = comment;
+    
+    const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        email: creds?.email,
+        password: creds?.password,
+        ...body
+      })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update review');
+    }
+    return response.json();
+  },
+
+  delete: async (reviewId: number): Promise<void> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        email: creds?.email,
+        password: creds?.password
+      })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete review');
+    }
+  }
+};
+
+export interface Enquiry {
+  id: number;
+  hostel_id: number;
+  student_id: number;
+  type: 'enquiry' | 'schedule_visit';
+  message?: string;
+  scheduled_date?: string;
+  reply?: string;
+  status: 'pending' | 'responded';
+  created_at?: string;
+  replied_at?: string;
+  student_name?: string;
+  student_email?: string;
+  hostel_name?: string;
+  hostel_address?: string;
+  hostel_city?: string;
+  owner_name?: string;
+  owner_email?: string;
+}
+
+// Enquiry API
+export const enquiryApi = {
+  create: async (hostelId: number, type: 'enquiry' | 'schedule_visit', message?: string, scheduledDate?: string): Promise<{ enquiry: any }> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/enquiries`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        email: creds?.email,
+        password: creds?.password,
+        hostel_id: hostelId,
+        type,
+        message,
+        scheduled_date: scheduledDate
+      })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to send enquiry');
+    }
+    return response.json();
+  },
+
+  getByOwner: async (): Promise<Enquiry[]> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/enquiries/owner`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch enquiries');
+    }
+    return response.json();
+  },
+
+  getByHostel: async (hostelId: number): Promise<Enquiry[]> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/enquiries/hostel/${hostelId}`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch enquiries');
+    }
+    return response.json();
+  },
+
+  getByStudent: async (): Promise<Enquiry[]> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/enquiries/student`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch enquiries');
+    }
+    return response.json();
+  },
+
+  reply: async (enquiryId: number, reply: string): Promise<{ message: string; enquiry: Enquiry }> => {
+    const creds = getCredentials();
+    const response = await fetch(`${API_BASE_URL}/enquiries/${enquiryId}/reply`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        email: creds?.email,
+        password: creds?.password,
+        reply
+      })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to send reply');
+    }
     return response.json();
   }
 };

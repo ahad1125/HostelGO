@@ -73,7 +73,7 @@ const HostelCard = ({
           <h3 className="font-heading font-semibold text-lg line-clamp-1">{hostel.name}</h3>
           <div className="flex items-center gap-1 text-warning-foreground bg-warning/20 px-2 py-1 rounded">
             <Star className="h-4 w-4 fill-current text-yellow-500" />
-            <span className="text-sm font-medium">{hostel.rating.toFixed(1)}</span>
+            <span className="text-sm font-medium">{hostel.rating ? hostel.rating.toFixed(1) : '0.0'}</span>
           </div>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-sm">
@@ -84,7 +84,7 @@ const HostelCard = ({
 
       <CardContent className="pb-3">
         <div className="flex items-center gap-1 text-xl font-bold text-primary mb-3">
-          <span>Rs {hostel.rent.toLocaleString()}</span>
+          <span>Rs {hostel.rent ? hostel.rent.toLocaleString() : 'N/A'}</span>
           <span className="text-sm font-normal text-muted-foreground">/month</span>
         </div>
 

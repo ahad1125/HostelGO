@@ -330,7 +330,7 @@ const AdminVerification = () => {
             <Button variant="outline" onClick={() => setShowRejectDialog(false)} disabled={isProcessing}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleReject} disabled={!rejectReason.trim() || isProcessing}>
+            <Button variant="destructive" onClick={handleReject} disabled={isProcessing}>
               {isProcessing ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
