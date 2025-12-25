@@ -5,17 +5,15 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { hostelApi, type Hostel as ApiHostel } from "@/lib/api";
 
 interface HostelCarouselProps {
-  autoSlideInterval?: number; // in milliseconds, default 10000 (10 seconds)
+  autoSlideInterval?: number; // in milliseconds, default 5000 (5 seconds)
 }
 
-const HostelCarousel = ({ autoSlideInterval = 10000 }: HostelCarouselProps) => {
+const HostelCarousel = ({ autoSlideInterval = 5000 }: HostelCarouselProps) => {
   const [hostels, setHostels] = useState<ApiHostel[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
@@ -173,12 +171,6 @@ const HostelCarousel = ({ autoSlideInterval = 10000 }: HostelCarouselProps) => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        {hostels.length > 1 && (
-          <>
-            <CarouselPrevious className="left-4 top-1/2 -translate-y-1/2" />
-            <CarouselNext className="right-4 top-1/2 -translate-y-1/2" />
-          </>
-        )}
       </Carousel>
 
       {/* Floating rating card */}
