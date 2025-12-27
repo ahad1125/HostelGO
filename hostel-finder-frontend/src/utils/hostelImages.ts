@@ -5,12 +5,15 @@
  * @returns Array of image URLs (1 uploaded or 2-3 default random images)
  */
 export const getHostelImage = (hostelId: number, imageUrl?: string | null): string => {
-  // If owner uploaded an image, use it
-  if (imageUrl && imageUrl.trim() !== '') {
-    return imageUrl;
+  // If owner uploaded an image (base64 or URL), use it
+  if (imageUrl && imageUrl.trim() !== '' && imageUrl !== 'null' && imageUrl !== 'undefined') {
+    // Validate it's a proper URL or base64
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:image/')) {
+      return imageUrl;
+    }
   }
   
-  // Otherwise, return default random images (2-3 images)
+  // Otherwise, return default random image
   // Array of different Unsplash image IDs for variety
   // These are all hostel/dormitory/room related images
   const imageIds = [
@@ -32,11 +35,11 @@ export const getHostelImage = (hostelId: number, imageUrl?: string | null): stri
   ];
   
   // Use modulo to cycle through images based on hostel ID
-  // Select 2-3 random images for variety
+  // This ensures each hostel gets a unique default image
   const baseIndex = hostelId % imageIds.length;
   const imageId = imageIds[baseIndex];
   
-  return `https://images.unsplash.com/photo-${imageId}?w=800&auto=format&fit=crop&q=60`;
+  return `https://images.unsplash.com/photo-${imageId}?w=800&auto=format&fit=crop&q=80`;
 };
 
 /**

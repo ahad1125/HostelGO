@@ -114,7 +114,7 @@ const AddHostel = () => {
         city: formData.city,
         rent: parseInt(formData.rent),
         facilities: formData.facilities.join(', '),
-        image_url: formData.image_url || undefined
+        image_url: formData.image_url && formData.image_url.trim() !== '' ? formData.image_url : undefined
       });
       
       toast({
@@ -310,27 +310,37 @@ const AddHostel = () => {
 
                 {/* Preview */}
                 {(imagePreview || formData.image_url) && (
-                  <div className="mt-4 relative">
+                  <div className="mt-4">
                     <Label>Preview</Label>
-                    <div className="relative mt-2">
+                    <div className="relative mt-2 group">
                       <img
                         src={imagePreview || formData.image_url}
                         alt="Hostel preview"
-                        className="w-full h-48 object-cover rounded-lg border border-border"
+                        className="w-full h-64 object-cover rounded-lg border-2 border-border shadow-md"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop&q=60";
+                          target.className = "w-full h-64 object-cover rounded-lg border-2 border-border shadow-md opacity-50";
                         }}
                       />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
                       <Button
                         type="button"
                         variant="destructive"
                         size="sm"
-                        className="absolute top-2 right-2"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={handleRemoveImage}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formData.image_url.startsWith('data:') 
+                        ? "Image uploaded from computer (base64)" 
+                        : formData.image_url 
+                        ? "Image from URL"
+                        : ""}
+                    </p>
                   </div>
                 )}
               </CardContent>
