@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, User } from "lucide-react";
+import { ArrowLeft, Loader2, User, Upload, X } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,8 @@ const EditHostel = () => {
   const [hostel, setHostel] = useState<Hostel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -66,6 +68,7 @@ const EditHostel = () => {
         facilities: data.facilities.split(', ').filter(f => f.trim()),
         image_url: data.image_url || "",
       });
+      setImagePreview(data.image_url || "");
     } catch (error: any) {
       toast({
         title: "Error loading hostel",
@@ -82,6 +85,55 @@ const EditHostel = () => {
       setFormData({ ...formData, facilities: [...formData.facilities, facility] });
     } else {
       setFormData({ ...formData, facilities: formData.facilities.filter(f => f !== facility) });
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file (JPG, PNG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setFormData({ ...formData, image_url: base64String });
+      setImagePreview(base64String);
+    };
+    reader.onerror = () => {
+      toast({
+        title: "Upload failed",
+        description: "Failed to read the image file",
+        variant: "destructive",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, image_url: "" });
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -258,32 +310,81 @@ const EditHostel = () => {
                 <CardTitle className="font-heading">Hostel Image</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* File Upload */}
                 <div>
-                  <Label htmlFor="image_url">Image URL</Label>
+                  <Label>Upload Image from Computer</Label>
+                  <div className="mt-2 border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload-edit"
+                      disabled={isSaving}
+                    />
+                    <label htmlFor="file-upload-edit" className={`cursor-pointer ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm font-medium mb-1">Click to upload or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
+                    </label>
+                  </div>
+                </div>
+
+                {/* OR Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+
+                {/* URL Input */}
+                <div>
+                  <Label htmlFor="image_url">Image URL (from Internet)</Label>
                   <Input
                     id="image_url"
                     type="url"
                     placeholder="https://example.com/hostel-image.jpg"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    value={formData.image_url && !formData.image_url.startsWith('data:') ? formData.image_url : ''}
+                    onChange={(e) => {
+                      setFormData({ ...formData, image_url: e.target.value });
+                      setImagePreview(e.target.value);
+                    }}
                     className="mt-2"
                     disabled={isSaving}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Enter a direct image URL. If left empty, default images will be used automatically.
+                    Enter a direct image URL from the internet. If left empty, default images will be used automatically.
                   </p>
                 </div>
-                {formData.image_url && (
-                  <div className="mt-4">
+
+                {/* Preview */}
+                {(imagePreview || formData.image_url) && (
+                  <div className="mt-4 relative">
                     <Label>Preview</Label>
-                    <img
-                      src={formData.image_url}
-                      alt="Hostel preview"
-                      className="mt-2 w-full h-48 object-cover rounded-lg border border-border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+                    <div className="relative mt-2">
+                      <img
+                        src={imagePreview || formData.image_url}
+                        alt="Hostel preview"
+                        className="w-full h-48 object-cover rounded-lg border border-border"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={handleRemoveImage}
+                        disabled={isSaving}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>

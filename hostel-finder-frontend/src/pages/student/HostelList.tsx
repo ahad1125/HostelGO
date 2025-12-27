@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getHostelImage } from "@/utils/hostelImages";
 
 interface SearchFilters {
   city: string;

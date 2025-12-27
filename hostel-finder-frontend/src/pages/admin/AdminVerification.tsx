@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { adminApi, Hostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getHostelImage } from "@/utils/hostelImages";
 
 const AdminVerification = () => {
   const navigate = useNavigate();
