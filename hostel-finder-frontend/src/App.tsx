@@ -22,12 +22,14 @@ import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import AddHostel from "./pages/owner/AddHostel";
 import MyHostels from "./pages/owner/MyHostels";
 import EditHostel from "./pages/owner/EditHostel";
+import OwnerHostelDetail from "./pages/owner/OwnerHostelDetail";
 import OwnerEnquiries from "./pages/owner/OwnerEnquiries";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminHostels from "./pages/admin/AdminHostels";
 import AdminVerification from "./pages/admin/AdminVerification";
+import AdminBookings from "./pages/admin/AdminBookings";
 
 import NotFound from "./pages/NotFound";
 
@@ -57,6 +59,7 @@ const App = () => (
               <Route path="/owner/dashboard" element={<OwnerDashboard />} />
               <Route path="/owner/add-hostel" element={<AddHostel />} />
               <Route path="/owner/my-hostels" element={<MyHostels />} />
+              <Route path="/owner/hostel/:id" element={<OwnerHostelDetail />} />
               <Route path="/owner/edit-hostel/:id" element={<EditHostel />} />
               <Route path="/owner/enquiries" element={<OwnerEnquiries />} />
 
@@ -64,6 +67,7 @@ const App = () => (
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/hostels" element={<AdminHostels />} />
               <Route path="/admin/verification" element={<AdminVerification />} />
+              <Route path="/admin/bookings" element={<AdminBookings />} />
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />

@@ -296,3 +296,4 @@ For questions or support, please open an issue on GitHub.
 
 **Made with ❤️ for students finding their perfect home away from home**
 
+

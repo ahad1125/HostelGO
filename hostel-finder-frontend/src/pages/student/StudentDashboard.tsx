@@ -57,7 +57,7 @@ const StudentDashboard = () => {
           rent: hostel.rent || 0,
           rating: 4.5, // default rating until backend supports it
           facilities: hostel.facilities ? hostel.facilities.split(",").map((f) => f.trim()).filter(Boolean) : [],
-          image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+          image: getHostelImage(hostel.id, hostel.image_url),
           isVerified: hostel.is_verified === 1,
         }));
         setHostels(transformed);

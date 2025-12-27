@@ -9,6 +9,7 @@ import HostelCard, { Hostel as HostelCardType } from "@/components/HostelCard";
 import { hostelApi, Hostel as ApiHostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getHostelImage } from "@/utils/hostelImages";
 
 const OwnerDashboard = () => {
   const [hostels, setHostels] = useState<HostelCardType[]>([]);
@@ -41,7 +42,7 @@ const OwnerDashboard = () => {
           rent: hostel.rent,
           rating: 4.5,
           facilities: hostel.facilities.split(",").map((f) => f.trim()).filter(Boolean),
-          image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+          image: getHostelImage(hostel.id, hostel.image_url),
           isVerified: hostel.is_verified === 1,
           ownerId: hostel.owner_id.toString(),
         }));

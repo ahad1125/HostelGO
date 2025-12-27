@@ -8,6 +8,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { hostelApi, type Hostel as ApiHostel } from "@/lib/api";
+import { getHostelImage } from "@/utils/hostelImages";
 
 interface HostelCarouselProps {
   autoSlideInterval?: number; // in milliseconds, default 5000 (5 seconds)
@@ -83,7 +84,7 @@ const HostelCarousel = ({ autoSlideInterval = 5000 }: HostelCarouselProps) => {
 
   // Get default image
   const getImage = (hostel: ApiHostel) => {
-    return "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop&q=60";
+    return getHostelImage(hostel.id, hostel.image_url);
   };
 
   if (isLoading) {
@@ -110,7 +111,7 @@ const HostelCarousel = ({ autoSlideInterval = 5000 }: HostelCarouselProps) => {
       <div className="relative">
         <div className="bg-card border-2 border-border rounded-2xl overflow-hidden shadow-lg">
           <img
-            src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop&q=60"
+            src={getHostelImage(0)}
             alt="Modern hostel room"
             className="w-full h-80 object-cover"
           />

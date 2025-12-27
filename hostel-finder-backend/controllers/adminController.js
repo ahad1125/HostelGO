@@ -182,8 +182,109 @@ const unverifyHostel = async (req, res) => {
     }
 };
 
+/**
+ * Get platform statistics
+ * GET /admin/statistics
+ * Returns aggregated platform statistics
+ */
+const getPlatformStats = async (req, res) => {
+    try {
+        console.log("🔍 Admin: Fetching platform statistics");
+        
+        // Get average rating and total reviews
+        const [reviewStats] = await db.query(
+            `SELECT 
+                AVG(rating) as avg_rating,
+                COUNT(*) as total_reviews
+             FROM reviews`
+        );
+        
+        // Get average rent
+        const [rentStats] = await db.query(
+            `SELECT AVG(rent) as avg_rent FROM hostels WHERE is_verified = 1`
+        );
+        
+        // Get unique cities count
+        const [cityStats] = await db.query(
+            `SELECT COUNT(DISTINCT city) as total_cities FROM hostels WHERE is_verified = 1`
+        );
+        
+        // Get total bookings (confirmed)
+        const [bookingStats] = await db.query(
+            `SELECT COUNT(*) as total_bookings FROM bookings WHERE status = 'confirmed'`
+        );
+        
+        const stats = {
+            avg_rating: reviewStats[0]?.avg_rating ? parseFloat(reviewStats[0].avg_rating).toFixed(1) : "0.0",
+            total_reviews: reviewStats[0]?.total_reviews || 0,
+            avg_rent: rentStats[0]?.avg_rent ? Math.round(rentStats[0].avg_rent) : 0,
+            total_cities: cityStats[0]?.total_cities || 0,
+            total_bookings: bookingStats[0]?.total_bookings || 0
+        };
+        
+        console.log("✅ Admin: Platform statistics:", stats);
+        res.json(stats);
+    } catch (err) {
+        console.error("❌ Error in getPlatformStats:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error SQL state:", err.sqlState);
+        return res.status(500).json({ 
+            error: "Database error", 
+            details: err.message,
+            code: err.code,
+            sqlState: err.sqlState
+        });
+    }
+};
+
+/**
+ * Get all bookings (admin view)
+ * GET /admin/bookings
+ * Returns all bookings with student and hostel details
+ */
+const getAllBookings = async (req, res) => {
+    try {
+        console.log("🔍 Admin: Fetching all bookings");
+        
+        // Get all bookings with student and hostel details
+        const [rows] = await db.query(
+            `SELECT 
+                b.*,
+                h.name as hostel_name,
+                h.address as hostel_address,
+                h.city as hostel_city,
+                h.rent as hostel_rent,
+                u_student.name as student_name,
+                u_student.email as student_email,
+                COALESCE(u_student.contact_number, '') as student_contact_number,
+                u_owner.name as owner_name,
+                u_owner.email as owner_email
+             FROM bookings b
+             JOIN hostels h ON b.hostel_id = h.id
+             JOIN users u_student ON b.student_id = u_student.id
+             JOIN users u_owner ON h.owner_id = u_owner.id
+             ORDER BY b.id DESC`
+        );
+        
+        console.log("✅ Admin: Found", rows.length, "bookings");
+        res.json(Array.isArray(rows) ? rows : []);
+    } catch (err) {
+        console.error("❌ Error in getAllBookings:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error SQL state:", err.sqlState);
+        return res.status(500).json({ 
+            error: "Database error", 
+            details: err.message,
+            code: err.code,
+            sqlState: err.sqlState
+        });
+    }
+};
+
 module.exports = {
     getAllHostels,
     verifyHostel,
-    unverifyHostel
+    unverifyHostel,
+    getPlatformStats,
+    getAllBookings
 };

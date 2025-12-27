@@ -25,6 +25,8 @@ interface HostelCardProps {
   onDelete?: (id: string) => void;
   onVerify?: (id: string) => void;
   onUnverify?: (id: string) => void;
+  onView?: (id: string) => void;
+  viewLink?: string;
 }
 
 const facilityIcons: Record<string, React.ReactNode> = {
@@ -40,7 +42,9 @@ const HostelCard = ({
   onEdit,
   onDelete,
   onVerify,
-  onUnverify
+  onUnverify,
+  onView,
+  viewLink
 }: HostelCardProps) => {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
@@ -105,11 +109,18 @@ const HostelCard = ({
 
       <CardFooter className="pt-0 gap-2">
         {!showActions ? (
-          <Link to={`/student/hostel/${hostel.id}`} className="w-full">
+          <Link to={viewLink || `/student/hostel/${hostel.id}`} className="w-full">
             <Button className="w-full">View Details</Button>
           </Link>
         ) : (
           <>
+            {onView && (
+              <Link to={viewLink || `/owner/hostel/${hostel.id}`} className="flex-1">
+                <Button variant="outline" className="w-full">
+                  View Details
+                </Button>
+              </Link>
+            )}
             {onEdit && (
               <Button variant="outline" className="flex-1" onClick={() => onEdit(hostel.id)}>
                 Edit

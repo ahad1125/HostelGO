@@ -155,7 +155,7 @@ const AdminVerification = () => {
                 {/* Image */}
                 <div className="md:w-64 h-48 md:h-auto flex-shrink-0">
                   <img
-                    src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800"
+                    src={getHostelImage(hostel.id, hostel.image_url)}
                     alt={hostel.name}
                     className="w-full h-full object-cover"
                   />
@@ -254,7 +254,7 @@ const AdminVerification = () => {
 
               <div className="space-y-4">
                 <img
-                  src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800"
+                  src={getHostelImage(selectedHostel.id, selectedHostel.image_url)}
                   alt={selectedHostel.name}
                   className="w-full h-48 object-cover rounded-lg"
                 />

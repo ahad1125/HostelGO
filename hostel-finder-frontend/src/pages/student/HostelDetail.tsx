@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { hostelApi, reviewApi, enquiryApi, bookingApi, Hostel, Review, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getHostelImage } from "@/utils/hostelImages";
 
 const facilityIcons: Record<string, React.ReactNode> = {
   wifi: <Wifi className="h-5 w-5" />,
@@ -366,7 +367,7 @@ const HostelDetail = () => {
           {/* Image Gallery */}
           <div className="rounded-xl overflow-hidden border border-border">
             <img
-              src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800"
+              src={getHostelImage(hostel.id, hostel.image_url)}
               alt={hostel.name}
               className="w-full h-80 object-cover"
             />
@@ -409,6 +410,16 @@ const HostelDetail = () => {
                   <span className="text-sm text-muted-foreground">({reviews.length} reviews)</span>
                 </div>
               </div>
+              
+              {hostel.confirmed_bookings !== undefined && (
+                <div className="mb-6 p-3 bg-muted rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    <span className="font-medium">Currently Booked:</span>
+                    <span className="font-semibold text-primary">{hostel.confirmed_bookings} student(s)</span>
+                  </div>
+                </div>
+              )}
 
               <h3 className="font-heading font-semibold text-lg mb-4">Facilities</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -557,12 +568,13 @@ const HostelDetail = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Contact Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-heading text-lg">Contact Hostel</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* Contact Card - Hidden for admin */}
+          {user && user.role !== 'admin' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-heading text-lg">Contact Hostel</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
               {existingBooking ? (
                 <div className="p-4 bg-muted rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
@@ -646,6 +658,7 @@ const HostelDetail = () => {
               </Button>
             </CardContent>
           </Card>
+          )}
 
           {/* Quick Info */}
           <Card>

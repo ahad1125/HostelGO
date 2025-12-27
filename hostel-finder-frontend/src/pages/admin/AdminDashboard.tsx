@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Building2, CheckCircle, Clock, Users, TrendingUp, AlertCircle } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Building2, CheckCircle, Clock, Users, TrendingUp, AlertCircle, Bell } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { adminApi, Hostel as ApiHostel } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { adminApi, Hostel as ApiHostel, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
+interface PlatformStats {
+  avg_rating: string;
+  total_reviews: number;
+  avg_rent: number;
+  total_cities: number;
+  total_bookings: number;
+}
+
 const AdminDashboard = () => {
   const [hostels, setHostels] = useState<ApiHostel[]>([]);
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
@@ -26,15 +37,21 @@ const AdminDashboard = () => {
       return;
     }
 
-    const fetchHostels = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const data = await adminApi.getAllHostels();
-        setHostels(data);
+        const [hostelsData, statsData, bookingsData] = await Promise.all([
+          adminApi.getAllHostels(),
+          adminApi.getStatistics(),
+          adminApi.getAllBookings()
+        ]);
+        setHostels(hostelsData);
+        setStats(statsData);
+        setBookings(bookingsData);
       } catch (error: any) {
         toast({
-          title: "Error loading hostels",
-          description: error.message || "Failed to fetch hostels",
+          title: "Error loading data",
+          description: error.message || "Failed to fetch data",
           variant: "destructive",
         });
       } finally {
@@ -42,13 +59,39 @@ const AdminDashboard = () => {
       }
     };
 
-    fetchHostels();
+    fetchData();
+    
+    // Poll for new bookings every 30 seconds
+    const interval = setInterval(() => {
+      adminApi.getAllBookings()
+        .then(newBookings => {
+          setBookings(prevBookings => {
+            if (prevBookings.length > 0 && newBookings.length > prevBookings.length) {
+              const newBookingCount = newBookings.length - prevBookings.length;
+              toast({
+                title: "New Booking!",
+                description: `${newBookingCount} new booking${newBookingCount > 1 ? 's' : ''} received`,
+              });
+            }
+            return newBookings;
+          });
+        })
+        .catch(() => {}); // Silently fail on polling errors
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [user, isAuthLoading, navigate, toast]);
 
   const allHostels = hostels;
   const verifiedCount = allHostels.filter((h) => h.is_verified === 1).length;
   const pendingCount = allHostels.filter((h) => h.is_verified === 0).length;
   const uniqueCities = new Set(allHostels.map((h) => h.city));
+  
+  // Get recent bookings (pending and confirmed)
+  const recentBookings = bookings
+    .filter(b => b.status === 'pending' || b.status === 'confirmed')
+    .slice(0, 5);
+  const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
 
   const stats = [
     { icon: Building2, label: "Total Hostels", value: allHostels.length, color: "text-primary" },
@@ -57,15 +100,49 @@ const AdminDashboard = () => {
     { icon: Users, label: "Cities Covered", value: uniqueCities.size, color: "text-primary" },
   ];
 
-  const recentActivities = allHostels.slice(0, 4).map((h) => ({
-    action: h.is_verified === 1 ? "Hostel verified" : "Hostel pending verification",
-    hostel: h.name,
-    time: "Recently",
-    type: h.is_verified === 1 ? "verified" : "new",
-  }));
+  const recentActivities = [
+    ...recentBookings.map((b) => ({
+      action: `Student ${b.student_name || 'Unknown'} booked ${b.hostel_name || 'hostel'}`,
+      hostel: b.hostel_name || "Unknown Hostel",
+      time: "Recently",
+      type: b.status === 'confirmed' ? "verified" : "new",
+    })),
+    ...allHostels.slice(0, Math.max(0, 4 - recentBookings.length)).map((h) => ({
+      action: h.is_verified === 1 ? "Hostel verified" : "Hostel pending verification",
+      hostel: h.name,
+      time: "Recently",
+      type: h.is_verified === 1 ? "verified" : "new",
+    }))
+  ].slice(0, 5);
 
   return (
     <DashboardLayout role="admin" title="Admin Dashboard" subtitle="Platform overview and management">
+      {/* New Bookings Notification */}
+      {pendingBookingsCount > 0 && (
+        <Card className="mb-6 bg-primary/5 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">New Bookings Pending</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {pendingBookingsCount} booking{pendingBookingsCount !== 1 ? 's' : ''} waiting for owner confirmation
+                  </p>
+                </div>
+              </div>
+              <Link to="/admin/bookings">
+                <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                  View Bookings →
+                </Badge>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => (
@@ -149,31 +226,43 @@ const AdminDashboard = () => {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Verification Rate</span>
-                  <span className="font-medium">{Math.round((verifiedCount / allHostels.length) * 100)}%</span>
+                  <span className="font-medium">
+                    {allHostels.length > 0 
+                      ? Math.round((verifiedCount / allHostels.length) * 100)
+                      : 0}%
+                  </span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-accent rounded-full"
-                    style={{ width: `${(verifiedCount / allHostels.length) * 100}%` }}
+                    style={{ 
+                      width: `${allHostels.length > 0 
+                        ? (verifiedCount / allHostels.length) * 100 
+                        : 0}%` 
+                    }}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold">4.4</p>
+                  <p className="text-2xl font-bold">{stats?.avg_rating || "0.0"}</p>
                   <p className="text-sm text-muted-foreground">Avg Rating</p>
                 </div>
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold">156</p>
+                  <p className="text-2xl font-bold">{stats?.total_reviews || 0}</p>
                   <p className="text-sm text-muted-foreground">Total Reviews</p>
                 </div>
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold">Rs 8.5K</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.avg_rent 
+                      ? `Rs ${(stats.avg_rent / 1000).toFixed(1)}K` 
+                      : "Rs 0"}
+                  </p>
                   <p className="text-sm text-muted-foreground">Avg Rent</p>
                 </div>
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold">8</p>
+                  <p className="text-2xl font-bold">{stats?.total_cities || uniqueCities.size}</p>
                   <p className="text-sm text-muted-foreground">Cities</p>
                 </div>
               </div>

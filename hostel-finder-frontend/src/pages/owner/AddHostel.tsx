@@ -19,7 +19,7 @@ import { hostelApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
+const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Gujranwala"];
 const facilityOptions = ["WiFi", "AC", "Food", "Laundry", "Gym", "Parking", "Security", "CCTV", "Power Backup", "Study Room", "Library", "Housekeeping"];
 
 const AddHostel = () => {
@@ -35,6 +35,7 @@ const AddHostel = () => {
     rent: "",
     description: "",
     facilities: [] as string[],
+    image_url: "",
   });
 
   const handleFacilityChange = (facility: string, checked: boolean) => {
@@ -61,7 +62,8 @@ const AddHostel = () => {
         address: formData.address,
         city: formData.city,
         rent: parseInt(formData.rent),
-        facilities: formData.facilities.join(', ')
+        facilities: formData.facilities.join(', '),
+        image_url: formData.image_url || undefined
       });
       
       toast({
@@ -203,21 +205,36 @@ const AddHostel = () => {
             {/* Images */}
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading">Hostel Images</CardTitle>
+                <CardTitle className="font-heading">Hostel Image</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-2">Drag and drop images here, or click to browse</p>
-                  <p className="text-sm text-muted-foreground mb-4">PNG, JPG up to 5MB each</p>
-                  <Button type="button" variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Images
-                  </Button>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="image_url">Image URL</Label>
+                  <Input
+                    id="image_url"
+                    type="url"
+                    placeholder="https://example.com/hostel-image.jpg"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Enter a direct image URL. If left empty, default images will be used automatically.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  * Image upload feature coming soon
-                </p>
+                {formData.image_url && (
+                  <div className="mt-4">
+                    <Label>Preview</Label>
+                    <img
+                      src={formData.image_url}
+                      alt="Hostel preview"
+                      className="mt-2 w-full h-48 object-cover rounded-lg border border-border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

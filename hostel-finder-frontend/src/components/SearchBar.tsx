@@ -14,6 +14,7 @@ interface SearchFilters {
   city: string;
   maxRent: string;
   facility: string;
+  name?: string;
 }
 
 interface SearchBarProps {
@@ -29,7 +30,8 @@ const cities = [
   "Faisalabad",
   "Multan",
   "Peshawar",
-  "Quetta"
+  "Quetta",
+  "Gujranwala"
 ];
 
 const rentRanges = [
@@ -46,6 +48,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     city: "",
     maxRent: "",
     facility: "",
+    name: "",
   });
 
   const handleSearch = () => {
@@ -53,11 +56,11 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
   };
 
   const handleClear = () => {
-    setFilters({ city: "", maxRent: "", facility: "" });
-    onSearch({ city: "", maxRent: "", facility: "" });
+    setFilters({ city: "", maxRent: "", facility: "", name: "" });
+    onSearch({ city: "", maxRent: "", facility: "", name: "" });
   };
 
-  const hasActiveFilters = filters.city || filters.maxRent || filters.facility;
+  const hasActiveFilters = filters.city || filters.maxRent || filters.facility || filters.name;
 
   return (
     <div className="bg-card border border-border rounded-lg p-4 shadow-sm">
@@ -66,9 +69,23 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Search by facility (WiFi, AC, Parking...)"
-            value={filters.facility}
-            onChange={(e) => setFilters({ ...filters, facility: e.target.value })}
+            placeholder="Search by hostel name or facility (WiFi, AC, Parking...)"
+            value={filters.name || filters.facility}
+            onChange={(e) => {
+              const value = e.target.value;
+              // If it looks like a hostel name (contains letters/spaces), use name filter
+              // Otherwise, use facility filter
+              if (value.match(/^[a-zA-Z\s]+$/)) {
+                setFilters({ ...filters, name: value, facility: "" });
+              } else {
+                setFilters({ ...filters, facility: value, name: "" });
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch();
+              }
+            }}
             className="pl-10"
           />
         </div>
@@ -145,13 +162,6 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
             </div>
           </div>
 
-          {/* API Query Preview - Educational */}
-          <div className="mt-4 p-3 bg-muted rounded-lg">
-            <p className="text-xs text-muted-foreground font-mono">
-              <span className="font-medium">API Query Preview: </span>
-              /hostels/search?city={filters.city || "[any]"}&maxRent={filters.maxRent || "[any]"}&facility={filters.facility || "[any]"}
-            </p>
-          </div>
         </div>
       )}
     </div>

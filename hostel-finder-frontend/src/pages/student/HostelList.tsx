@@ -13,6 +13,7 @@ interface SearchFilters {
   city: string;
   maxRent: string;
   facility: string;
+  name?: string;
 }
 
 const HostelList = () => {
@@ -24,7 +25,8 @@ const HostelList = () => {
   const [filters, setFilters] = useState<SearchFilters>({
     city: "",
     maxRent: "",
-    facility: ""
+    facility: "",
+    name: ""
   });
 
   useEffect(() => {
@@ -56,13 +58,14 @@ const HostelList = () => {
     setIsLoading(true);
     
     try {
-      const hasFilters = newFilters.city || newFilters.maxRent || newFilters.facility;
+      const hasFilters = newFilters.city || newFilters.maxRent || newFilters.facility || newFilters.name;
       
       if (hasFilters) {
         const data = await hostelApi.search({
           city: newFilters.city || undefined,
           maxRent: newFilters.maxRent && newFilters.maxRent !== "any" ? parseInt(newFilters.maxRent) : undefined,
-          facility: newFilters.facility || undefined
+          facility: newFilters.facility || undefined,
+          name: newFilters.name || undefined
         });
         setHostels(data);
       } else {
@@ -90,7 +93,7 @@ const HostelList = () => {
     rent: hostel.rent || 0,
     facilities: hostel.facilities ? hostel.facilities.split(', ').filter(Boolean) : [],
     rating: 4.5, // Default rating since API doesn't provide it
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+    image: getHostelImage(hostel.id, hostel.image_url),
     isVerified: hostel.is_verified === 1,
   });
 

@@ -147,10 +147,10 @@ const getAllHostels = async (req, res) => {
  */
 const searchHostels = async (req, res) => {
     const user = req.user;
-    const { city, maxRent, facility } = req.query;
+    const { city, maxRent, facility, name } = req.query;
 
     try {
-        console.log("🔍 Searching hostels for user:", user.role, "filters:", { city, maxRent, facility });
+        console.log("🔍 Searching hostels for user:", user.role, "filters:", { city, maxRent, facility, name });
         
         // Build query with direct database access
         let query = `SELECT h.*, u.name as owner_name, u.email as owner_email,
@@ -183,6 +183,11 @@ const searchHostels = async (req, res) => {
         if (facility) {
             conditions.push("LOWER(h.facilities) LIKE ?");
             values.push(`%${facility.toLowerCase()}%`);
+        }
+
+        if (name) {
+            conditions.push("LOWER(h.name) LIKE ?");
+            values.push(`%${name.toLowerCase()}%`);
         }
 
         if (conditions.length > 0) {
@@ -255,7 +260,15 @@ const getHostelById = async (req, res) => {
             return res.status(403).json({ error: "You can only view your own hostels" });
         }
 
-        console.log("✅ Returning hostel data");
+        // Get booking count (confirmed bookings only)
+        const [bookingCountRows] = await db.query(
+            "SELECT COUNT(*) as confirmed_bookings FROM bookings WHERE hostel_id = ? AND status = 'confirmed'",
+            [parseInt(hostelId)]
+        );
+        const confirmedBookings = bookingCountRows[0]?.confirmed_bookings || 0;
+        hostel.confirmed_bookings = confirmedBookings;
+
+        console.log("✅ Returning hostel data with booking count:", confirmedBookings);
         res.json(hostel);
     } catch (err) {
         console.error("❌ Error in getHostelById:", err.message);
@@ -280,7 +293,7 @@ const getHostelById = async (req, res) => {
  */
 const createHostel = async (req, res) => {
     const user = req.user;
-    const { name, address, city, rent, facilities } = req.body;
+    const { name, address, city, rent, facilities, image_url } = req.body;
 
     // Validate required fields
     if (!name || !address || !city || !rent) {
@@ -300,8 +313,8 @@ const createHostel = async (req, res) => {
         
         // Use direct query for reliability
         const [result] = await db.query(
-            "INSERT INTO hostels (name, address, city, rent, facilities, owner_id, contact_number, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            [name, address, city, parseInt(rent), facilities || '', user.id, null, 0]
+            "INSERT INTO hostels (name, address, city, rent, facilities, owner_id, contact_number, is_verified, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [name, address, city, parseInt(rent), facilities || '', user.id, null, 0, image_url || null]
         );
 
         const hostelId = result.insertId;
@@ -346,7 +359,7 @@ const createHostel = async (req, res) => {
 const updateHostel = async (req, res) => {
     const user = req.user;
     const hostelId = req.params.id;
-    const { name, address, city, rent, facilities } = req.body;
+    const { name, address, city, rent, facilities, image_url } = req.body;
 
     try {
         console.log("🔍 Updating hostel:", hostelId, "by owner:", user.id);

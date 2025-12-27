@@ -9,6 +9,7 @@ import { Loader2, Search } from "lucide-react";
 import { adminApi, Hostel as ApiHostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getHostelImage } from "@/utils/hostelImages";
 
 const AdminHostels = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,7 +58,7 @@ const AdminHostels = () => {
     rent: hostel.rent || 0,
     rating: 4.5, // Backend doesn't store rating yet
     facilities: hostel.facilities ? hostel.facilities.split(",").map((f) => f.trim()).filter(Boolean) : [],
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+    image: getHostelImage(hostel.id, hostel.image_url),
     isVerified: hostel.is_verified === 1,
     ownerId: hostel.owner_id?.toString() || '0',
   });

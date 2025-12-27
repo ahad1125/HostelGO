@@ -17,6 +17,12 @@ router.put("/verify-hostel/:id", authenticate, requireRole("admin"), adminContro
 // PUT /admin/unverify-hostel/:id - Unverify a hostel (hide it from students)
 router.put("/unverify-hostel/:id", authenticate, requireRole("admin"), adminController.unverifyHostel);
 
+// GET /admin/statistics - Get platform statistics
+router.get("/statistics", authenticate, requireRole("admin"), adminController.getPlatformStats);
+
+// GET /admin/bookings - Get all bookings (admin view)
+router.get("/bookings", authenticate, requireRole("admin"), adminController.getAllBookings);
+
 module.exports = router;
 
 

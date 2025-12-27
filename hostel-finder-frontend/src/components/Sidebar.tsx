@@ -8,6 +8,7 @@ import {
   CheckCircle, 
   LogOut,
   User,
+  Users,
   X,
   Mail
 } from "lucide-react";
@@ -41,6 +42,7 @@ const Sidebar = ({ role, isOpen, onClose }: SidebarProps) => {
     { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/admin/hostels", icon: List, label: "All Hostels" },
     { to: "/admin/verification", icon: CheckCircle, label: "Verification" },
+    { to: "/admin/bookings", icon: Users, label: "Bookings" },
   ];
 
   const links = role === "student" ? studentLinks : role === "owner" ? ownerLinks : adminLinks;

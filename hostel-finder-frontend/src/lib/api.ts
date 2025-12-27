@@ -34,6 +34,8 @@ export interface Hostel {
   owner_email?: string;
   owner_contact_number?: string;
   contact_number?: string;
+  confirmed_bookings?: number;
+  image_url?: string | null;
 }
 
 export interface Review {
@@ -161,12 +163,14 @@ export const hostelApi = {
     city?: string;
     maxRent?: number;
     facility?: string;
+    name?: string;
   }): Promise<Hostel[]> => {
     const searchParams = new URLSearchParams();
     if (params.city) searchParams.append("city", params.city);
     if (params.maxRent)
       searchParams.append("maxRent", params.maxRent.toString());
     if (params.facility) searchParams.append("facility", params.facility);
+    if (params.name) searchParams.append("name", params.name);
 
     const response = await fetch(
       `${API_BASE_URL}/hostels/search?${searchParams}`,
@@ -304,6 +308,34 @@ export const adminApi = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || "Failed to unverify hostel");
+    }
+    return response.json();
+  },
+
+  getStatistics: async (): Promise<{
+    avg_rating: string;
+    total_reviews: number;
+    avg_rent: number;
+    total_cities: number;
+    total_bookings: number;
+  }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/statistics`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch statistics");
+    }
+    return response.json();
+  },
+
+  getAllBookings: async (): Promise<Booking[]> => {
+    const response = await fetch(`${API_BASE_URL}/admin/bookings`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch bookings");
     }
     return response.json();
   },

@@ -18,6 +18,7 @@ import {
 import { hostelApi, Hostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getHostelImage } from "@/utils/hostelImages";
 
 const MyHostels = () => {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ const MyHostels = () => {
     rent: hostel.rent || 0,
     facilities: hostel.facilities ? hostel.facilities.split(',').map((f) => f.trim()).filter(Boolean) : [],
     rating: 4.5,
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
+    image: getHostelImage(hostel.id, hostel.image_url),
     isVerified: hostel.is_verified === 1,
   });
 
@@ -142,6 +143,8 @@ const MyHostels = () => {
                   hostel={transformHostel(hostel)}
                   showActions
                   showVerificationBadge
+                  onView={() => {}}
+                  viewLink={`/owner/hostel/${hostel.id}`}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />

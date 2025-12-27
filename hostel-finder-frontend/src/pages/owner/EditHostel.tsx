@@ -19,7 +19,7 @@ import { hostelApi, Hostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];
+const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Gujranwala"];
 const facilityOptions = ["WiFi", "AC", "Food", "Laundry", "Gym", "Parking", "Security", "CCTV", "Power Backup", "Study Room", "Library", "Housekeeping"];
 
 const EditHostel = () => {
@@ -39,6 +39,7 @@ const EditHostel = () => {
     rent: "",
     description: "",
     facilities: [] as string[],
+    image_url: "",
   });
 
   useEffect(() => {
@@ -63,6 +64,7 @@ const EditHostel = () => {
         rent: data.rent.toString(),
         description: "",
         facilities: data.facilities.split(', ').filter(f => f.trim()),
+        image_url: data.image_url || "",
       });
     } catch (error: any) {
       toast({
@@ -93,7 +95,8 @@ const EditHostel = () => {
         address: formData.address,
         city: formData.city,
         rent: parseInt(formData.rent),
-        facilities: formData.facilities.join(', ')
+        facilities: formData.facilities.join(', '),
+        image_url: formData.image_url || undefined
       });
       
       toast({
@@ -246,6 +249,43 @@ const EditHostel = () => {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Images */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-heading">Hostel Image</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="image_url">Image URL</Label>
+                  <Input
+                    id="image_url"
+                    type="url"
+                    placeholder="https://example.com/hostel-image.jpg"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    className="mt-2"
+                    disabled={isSaving}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Enter a direct image URL. If left empty, default images will be used automatically.
+                  </p>
+                </div>
+                {formData.image_url && (
+                  <div className="mt-4">
+                    <Label>Preview</Label>
+                    <img
+                      src={formData.image_url}
+                      alt="Hostel preview"
+                      className="mt-2 w-full h-48 object-cover rounded-lg border border-border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

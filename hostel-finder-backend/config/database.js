@@ -84,9 +84,33 @@ async function initializeDatabase() {
         owner_id INT NOT NULL,
         contact_number VARCHAR(20),
         is_verified TINYINT(1) DEFAULT 0,
+        image_url TEXT,
         FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
+        
+        // Add image_url column if it doesn't exist (for existing databases)
+        try {
+            // Check if column exists first
+            const [columns] = await connection.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'hostels' 
+                AND COLUMN_NAME = 'image_url'
+            `);
+            
+            if (columns.length === 0) {
+                await connection.query(`
+                    ALTER TABLE hostels 
+                    ADD COLUMN image_url TEXT
+                `);
+                console.log("✅ Added image_url column to hostels table");
+            }
+        } catch (err) {
+            // Column might already exist or other error, log but don't fail
+            console.log("ℹ️ image_url column check:", err.message);
+        }
 
         // REVIEWS
         await connection.query(`
