@@ -72,13 +72,15 @@ const OwnerHostelDetail = () => {
     }
   };
 
-  const handleUpdateBookingStatus = async (bookingId: number, status: "confirmed" | "cancelled") => {
+  const handleUpdateBookingStatus = async (bookingId: number, status: "owner_approved" | "cancelled") => {
     setIsUpdatingBooking(bookingId);
     try {
       await bookingApi.update(bookingId, status);
       toast({
-        title: status === 'confirmed' ? "Booking confirmed!" : "Booking cancelled",
-        description: `The booking has been ${status === 'confirmed' ? 'confirmed' : 'cancelled'}`,
+        title: status === 'owner_approved' ? "Booking approved!" : "Booking cancelled",
+        description: status === 'owner_approved' 
+          ? "Booking approved! Waiting for admin confirmation."
+          : "The booking has been cancelled",
       });
       // Refresh bookings
       const updatedBookings = await bookingApi.getByHostel(parseInt(id!));
@@ -118,6 +120,7 @@ const OwnerHostelDetail = () => {
   }
 
   const pendingBookings = bookings.filter(b => b.status === 'pending');
+  const ownerApprovedBookings = bookings.filter(b => b.status === 'owner_approved');
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
   const cancelledBookings = bookings.filter(b => b.status === 'cancelled');
 
@@ -205,7 +208,7 @@ const OwnerHostelDetail = () => {
                               <Button
                                 size="sm"
                                 className="gap-2"
-                                onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')}
+                                onClick={() => handleUpdateBookingStatus(booking.id, 'owner_approved')}
                                 disabled={isUpdatingBooking === booking.id}
                               >
                                 {isUpdatingBooking === booking.id ? (
@@ -213,7 +216,7 @@ const OwnerHostelDetail = () => {
                                 ) : (
                                   <CheckCircle className="h-4 w-4" />
                                 )}
-                                Confirm
+                                Approve
                               </Button>
                               <Button
                                 size="sm"
@@ -230,6 +233,33 @@ const OwnerHostelDetail = () => {
                                 Cancel
                               </Button>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Owner Approved Bookings */}
+                  {ownerApprovedBookings.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-blue-500" />
+                        Owner Approved - Awaiting Admin ({ownerApprovedBookings.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {ownerApprovedBookings.map((booking) => (
+                          <div key={booking.id} className="p-4 border border-border rounded-lg bg-blue-500/5">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <p className="font-semibold">{booking.student_name || 'Unknown Student'}</p>
+                                <p className="text-sm text-muted-foreground">{booking.student_email}</p>
+                                {booking.student_contact_number && (
+                                  <p className="text-sm text-muted-foreground">Phone: {booking.student_contact_number}</p>
+                                )}
+                              </div>
+                              <Badge className="bg-blue-500 text-white">Owner Approved</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Waiting for admin confirmation</p>
                           </div>
                         ))}
                       </div>
@@ -343,5 +373,8 @@ const OwnerHostelDetail = () => {
 };
 
 export default OwnerHostelDetail;
+
+
+
 
 

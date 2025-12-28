@@ -71,6 +71,23 @@ const AdminBookings = () => {
     }
   };
 
+  const handleConfirmBooking = async (bookingId: number) => {
+    try {
+      await bookingApi.update(bookingId, 'confirmed');
+      toast({
+        title: "Booking confirmed!",
+        description: "The booking has been successfully confirmed",
+      });
+      fetchBookings(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        title: "Failed to confirm booking",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Group bookings by hostel
   const bookingsByHostel = bookings.reduce((acc, booking) => {
     const hostelId = booking.hostel_id;
@@ -217,8 +234,9 @@ const AdminBookings = () => {
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="all">All ({allBookings.length})</TabsTrigger>
+          <TabsTrigger value="owner_approved">Awaiting Admin ({ownerApprovedBookings.length})</TabsTrigger>
           <TabsTrigger value="confirmed">Confirmed ({confirmedBookings.length})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({pendingBookings.length})</TabsTrigger>
+          <TabsTrigger value="pending">Pending Owner ({pendingBookings.length})</TabsTrigger>
           <TabsTrigger value="by-hostel">By Hostel ({Object.keys(bookingsByHostel).length})</TabsTrigger>
         </TabsList>
 
@@ -264,6 +282,58 @@ const AdminBookings = () => {
                       <div className="ml-4">
                         {getStatusBadge(booking.status)}
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="owner_approved">
+          <div className="space-y-4">
+            {ownerApprovedBookings.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <p className="text-muted-foreground">No bookings awaiting admin approval.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              ownerApprovedBookings.map((booking) => (
+                <Card key={booking.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <h3 className="font-semibold">{booking.hostel_name}</h3>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                          <MapPin className="h-3 w-3" />
+                          <span>{booking.hostel_address}, {booking.hostel_city}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">{booking.student_name || "Unknown"}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{booking.student_email}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {getStatusBadge(booking.status)}
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => handleConfirmBooking(booking.id)}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Confirm Booking
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -427,5 +497,8 @@ const AdminBookings = () => {
 };
 
 export default AdminBookings;
+
+
+
 
 

@@ -57,7 +57,7 @@ const createBooking = async (req, res) => {
 
         // Check if student already has a booking for this hostel
         const [existingBookings] = await db.query(
-            "SELECT * FROM bookings WHERE hostel_id = ? AND student_id = ? AND status IN ('pending', 'confirmed')",
+            "SELECT * FROM bookings WHERE hostel_id = ? AND student_id = ? AND status IN ('pending', 'owner_approved', 'confirmed')",
             [parseInt(hostel_id), user.id]
         );
 
@@ -190,8 +190,8 @@ const getBookingsByHostel = async (req, res) => {
 /**
  * Update booking status
  * PUT /bookings/:id
- * Body: { status } - 'pending', 'confirmed', or 'cancelled'
- * Students can cancel their bookings, owners can confirm/cancel
+ * Body: { status } - 'pending', 'owner_approved', 'confirmed', or 'cancelled'
+ * Students can cancel their bookings, owners can approve/cancel, admins can confirm/cancel
  */
 const updateBooking = async (req, res) => {
     const user = req.user;
@@ -199,9 +199,9 @@ const updateBooking = async (req, res) => {
     const { status } = req.body;
 
     // Validate status
-    if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
+    if (!['pending', 'owner_approved', 'confirmed', 'cancelled'].includes(status)) {
         return res.status(400).json({ 
-            error: "Status must be 'pending', 'confirmed', or 'cancelled'" 
+            error: "Status must be 'pending', 'owner_approved', 'confirmed', or 'cancelled'" 
         });
     }
 
@@ -239,12 +239,27 @@ const updateBooking = async (req, res) => {
             if (booking.owner_id !== user.id) {
                 return res.status(403).json({ error: "You can only update bookings for your own hostels" });
             }
-            // Owners can confirm or cancel
-            if (!['confirmed', 'cancelled'].includes(status)) {
-                return res.status(400).json({ error: "Owners can only confirm or cancel bookings" });
+            // Owners can approve (owner_approved) or cancel bookings
+            // They cannot directly confirm - that requires admin approval
+            if (!['owner_approved', 'cancelled'].includes(status)) {
+                return res.status(400).json({ error: "Owners can only approve or cancel bookings. Admin approval is required for final confirmation." });
+            }
+            // Owners can only approve pending bookings
+            if (status === 'owner_approved' && booking.status !== 'pending') {
+                return res.status(400).json({ error: "You can only approve pending bookings" });
+            }
+        } else if (user.role === 'admin') {
+            // Admins can confirm owner_approved bookings or cancel any booking
+            if (status === 'confirmed') {
+                // Admin can only confirm bookings that are owner_approved
+                if (booking.status !== 'owner_approved') {
+                    return res.status(400).json({ error: "You can only confirm bookings that have been approved by the owner" });
+                }
+            } else if (status !== 'cancelled') {
+                return res.status(400).json({ error: "Admins can only confirm (owner_approved bookings) or cancel bookings" });
             }
         } else {
-            return res.status(403).json({ error: "Only students and owners can update bookings" });
+            return res.status(403).json({ error: "Only students, owners, and admins can update bookings" });
         }
 
         // Update booking status
@@ -325,6 +340,9 @@ module.exports = {
     updateBooking,
     deleteBooking
 };
+
+
+
 
 
 

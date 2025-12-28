@@ -104,7 +104,7 @@ const HostelDetail = () => {
       if (user && user.role === 'student') {
         try {
           const bookings = await bookingApi.getByStudent();
-          const booking = bookings.find(b => b.hostel_id === parseInt(id!) && (b.status === 'pending' || b.status === 'confirmed'));
+          const booking = bookings.find(b => b.hostel_id === parseInt(id!) && (b.status === 'pending' || b.status === 'owner_approved' || b.status === 'confirmed'));
           setExistingBooking(booking || null);
         } catch (err) {
           console.log("No existing booking found");
@@ -314,7 +314,7 @@ const HostelDetail = () => {
       setExistingBooking(result.booking);
       toast({
         title: "Booking created!",
-        description: "Your booking is pending confirmation from the owner",
+        description: "Your booking is pending owner approval",
       });
     } catch (error: any) {
       console.error('Booking error:', error);
@@ -574,8 +574,8 @@ const HostelDetail = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Contact Card - Hidden for admin */}
-          {user && user.role !== 'admin' && (
+          {/* Contact Card - Only visible for students */}
+          {user && user.role === 'student' && (
             <Card>
               <CardHeader>
                 <CardTitle className="font-heading text-lg">Contact Hostel</CardTitle>
@@ -586,19 +586,26 @@ const HostelDetail = () => {
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">Booking Status:</span>
                     <Badge 
-                      variant={existingBooking.status === 'confirmed' ? 'default' : existingBooking.status === 'pending' ? 'secondary' : 'destructive'}
+                      variant={
+                        existingBooking.status === 'confirmed' ? 'default' 
+                        : existingBooking.status === 'owner_approved' ? 'default'
+                        : existingBooking.status === 'pending' ? 'secondary' 
+                        : 'destructive'
+                      }
                     >
                       {existingBooking.status.charAt(0).toUpperCase() + existingBooking.status.slice(1)}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {existingBooking.status === 'pending' 
-                      ? "Waiting for owner confirmation"
+                      ? "Waiting for owner approval"
+                      : existingBooking.status === 'owner_approved'
+                      ? "Owner approved! Waiting for admin confirmation"
                       : existingBooking.status === 'confirmed'
                       ? "Your booking is confirmed!"
                       : "This booking has been cancelled"}
                   </p>
-                  {existingBooking.status === 'pending' && (
+                  {(existingBooking.status === 'pending' || existingBooking.status === 'owner_approved') && (
                     <Button 
                       variant="outline" 
                       className="w-full"

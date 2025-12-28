@@ -87,11 +87,12 @@ const AdminDashboard = () => {
   const pendingCount = allHostels.filter((h) => h.is_verified === 0).length;
   const uniqueCities = new Set(allHostels.map((h) => h.city));
   
-  // Get recent bookings (pending and confirmed)
+  // Get recent bookings (pending, owner_approved, and confirmed)
   const recentBookings = bookings
-    .filter(b => b.status === 'pending' || b.status === 'confirmed')
+    .filter(b => b.status === 'pending' || b.status === 'owner_approved' || b.status === 'confirmed')
     .slice(0, 5);
   const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
+  const ownerApprovedBookingsCount = bookings.filter(b => b.status === 'owner_approved').length;
 
   const statCards = [
     { icon: Building2, label: "Total Hostels", value: allHostels.length, color: "text-primary" },
@@ -129,7 +130,13 @@ const AdminDashboard = () => {
                 <div>
                   <h3 className="font-semibold">New Bookings Pending</h3>
                   <p className="text-sm text-muted-foreground">
-                    {pendingBookingsCount} booking{pendingBookingsCount !== 1 ? 's' : ''} waiting for owner confirmation
+                    {pendingBookingsCount} booking{pendingBookingsCount !== 1 ? 's' : ''} waiting for owner approval
+                    {ownerApprovedBookingsCount > 0 && (
+                      <>
+                        <br />
+                        {ownerApprovedBookingsCount} booking{ownerApprovedBookingsCount !== 1 ? 's' : ''} waiting for admin confirmation
+                      </>
+                    )}
                   </p>
                 </div>
               </div>

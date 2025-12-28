@@ -131,11 +131,32 @@ async function initializeDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         hostel_id INT NOT NULL,
         student_id INT NOT NULL,
-        status ENUM('pending','confirmed','cancelled') DEFAULT 'pending',
+        status ENUM('pending','owner_approved','confirmed','cancelled') DEFAULT 'pending',
         FOREIGN KEY (hostel_id) REFERENCES hostels(id) ON DELETE CASCADE,
         FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
+        
+        // Update existing bookings table if it exists (migration)
+        try {
+            const [columns] = await connection.query(`
+                SELECT COLUMN_TYPE 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'bookings' 
+                AND COLUMN_NAME = 'status'
+            `);
+            
+            if (columns.length > 0 && !columns[0].COLUMN_TYPE.includes('owner_approved')) {
+                await connection.query(`
+                    ALTER TABLE bookings 
+                    MODIFY COLUMN status ENUM('pending','owner_approved','confirmed','cancelled') DEFAULT 'pending'
+                `);
+                console.log("✅ Updated bookings table to include owner_approved status");
+            }
+        } catch (err) {
+            console.log("ℹ️ Bookings table migration check:", err.message);
+        }
 
         // ENQUIRIES
         await connection.query(`
