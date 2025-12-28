@@ -1,30 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <!-- Light blue background with rounded corners -->
-  <rect width="100" height="100" rx="12" fill="#e0f2fe"/>
+  <rect width="100" height="100" rx="20" fill="#e0f2fe"/>
   
-  <!-- Building/Hostel icon in blue -->
-  <g transform="translate(20, 25)">
+  <!-- Building/Hostel icon matching Building2 from lucide-react -->
+  <g transform="translate(20, 15)">
     <!-- Main building structure -->
-    <rect x="10" y="20" width="40" height="45" fill="#3b82f6" rx="2"/>
+    <rect x="15" y="25" width="30" height="45" fill="#3b82f6" rx="3"/>
     
-    <!-- Windows -->
-    <rect x="15" y="28" width="8" height="8" fill="#ffffff" rx="1"/>
-    <rect x="27" y="28" width="8" height="8" fill="#ffffff" rx="1"/>
-    <rect x="39" y="28" width="8" height="8" fill="#ffffff" rx="1"/>
-    <rect x="15" y="40" width="8" height="8" fill="#ffffff" rx="1"/>
-    <rect x="27" y="40" width="8" height="8" fill="#ffffff" rx="1"/>
-    <rect x="39" y="40" width="8" height="8" fill="#ffffff" rx="1"/>
+    <!-- Windows - 2 rows, 3 columns -->
+    <rect x="18" y="30" width="6" height="6" fill="#ffffff" rx="1"/>
+    <rect x="27" y="30" width="6" height="6" fill="#ffffff" rx="1"/>
+    <rect x="36" y="30" width="6" height="6" fill="#ffffff" rx="1"/>
+    <rect x="18" y="40" width="6" height="6" fill="#ffffff" rx="1"/>
+    <rect x="27" y="40" width="6" height="6" fill="#ffffff" rx="1"/>
+    <rect x="36" y="40" width="6" height="6" fill="#ffffff" rx="1"/>
     
     <!-- Door -->
-    <rect x="24" y="50" width="10" height="15" fill="#1e40af" rx="1"/>
+    <rect x="24" y="55" width="12" height="15" fill="#1e40af" rx="2"/>
     
-    <!-- Roof -->
-    <polygon points="5,20 30,5 55,20" fill="#2563eb"/>
+    <!-- Roof/Top section -->
+    <rect x="12" y="20" width="36" height="8" fill="#2563eb" rx="2"/>
     
-    <!-- Bed icon inside (representing hostel) -->
-    <g transform="translate(15, 30)">
-      <rect x="2" y="8" width="12" height="6" fill="#ffffff" rx="1"/>
-      <rect x="3" y="9" width="10" height="4" fill="#3b82f6" rx="0.5"/>
-    </g>
+    <!-- Small decorative element on top -->
+    <rect x="28" y="15" width="4" height="5" fill="#1e40af" rx="1"/>
   </g>
 </svg>
