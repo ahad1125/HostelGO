@@ -38,7 +38,7 @@ import { Input } from "@/components/ui/input";
 import { hostelApi, reviewApi, enquiryApi, bookingApi, Hostel, Review, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getHostelImage } from "@/utils/hostelImages";
+import { getHostelImage, isHostelUsingDefaultImage } from "@/utils/hostelImages";
 
 const facilityIcons: Record<string, React.ReactNode> = {
   wifi: <Wifi className="h-5 w-5" />,
@@ -392,7 +392,7 @@ const HostelDetail = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Image Gallery */}
-          <div className="rounded-xl overflow-hidden border border-border bg-muted">
+          <div className="rounded-xl overflow-hidden border border-border bg-muted relative">
             <img
               src={getHostelImage(hostel.id, hostel.image_url)}
               alt={hostel.name}
@@ -404,6 +404,14 @@ const HostelDetail = () => {
                 target.onerror = null; // Prevent infinite loop
               }}
             />
+            {isHostelUsingDefaultImage(hostel.image_url) && (
+              <div className="absolute top-4 left-4 right-4">
+                <Badge variant="outline" className="bg-yellow-500/90 text-yellow-900 border-yellow-600 backdrop-blur-sm">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Default Image - Not Original Photo
+                </Badge>
+              </div>
+            )}
           </div>
 
           {/* Hostel Info */}
@@ -432,6 +440,22 @@ const HostelDetail = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {isHostelUsingDefaultImage(hostel.image_url) && (
+                <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Shield className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+                        Default Image Notice
+                      </p>
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        This hostel is displaying a default placeholder image. The image shown is not an original photo of the actual property. Please contact the owner for real photos before making a booking decision.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex items-center gap-6 mb-6">
                 <div className="flex items-center gap-2">
                   <span className="text-3xl font-bold">Rs {hostel.rent.toLocaleString()}</span>

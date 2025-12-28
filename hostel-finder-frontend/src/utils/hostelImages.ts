@@ -1,8 +1,37 @@
 /**
+ * Check if an image URL is a default/placeholder image
+ * @param imageUrl - The image URL to check
+ * @returns true if it's a default Unsplash image
+ */
+export const isDefaultImage = (imageUrl?: string | null): boolean => {
+  if (!imageUrl) return true;
+  // Check if it's a default Unsplash image
+  return imageUrl.includes('images.unsplash.com/photo-');
+};
+
+/**
+ * Check if a hostel is using a default image
+ * @param imageUrl - Optional uploaded image URL from database
+ * @returns true if using default image
+ */
+export const isHostelUsingDefaultImage = (imageUrl?: string | null): boolean => {
+  // If no image URL provided, it's using default
+  if (!imageUrl || imageUrl.trim() === '' || imageUrl === 'null' || imageUrl === 'undefined') {
+    return true;
+  }
+  // If it's not a valid URL or base64, it's using default
+  if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:image/')) {
+    return true;
+  }
+  // If it's an Unsplash URL, it's a default image
+  return imageUrl.includes('images.unsplash.com/photo-');
+};
+
+/**
  * Get hostel image - uses uploaded image if available, otherwise returns default random images
  * @param hostelId - The hostel ID
  * @param imageUrl - Optional uploaded image URL from database
- * @returns Array of image URLs (1 uploaded or 2-3 default random images)
+ * @returns Image URL (uploaded or default random image)
  */
 export const getHostelImage = (hostelId: number, imageUrl?: string | null): string => {
   // If owner uploaded an image (base64 or URL), use it

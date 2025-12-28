@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { bookingApi, hostelApi, Booking, Hostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getHostelImage } from "@/utils/hostelImages";
+import { getHostelImage, isHostelUsingDefaultImage } from "@/utils/hostelImages";
 
 const MyHostel = () => {
   const navigate = useNavigate();
@@ -150,11 +150,17 @@ const MyHostel = () => {
                   target.onerror = null;
                 }}
               />
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                 <Badge className="bg-green-500 text-white flex items-center gap-1">
                   <CheckCircle className="h-3 w-3" />
                   Confirmed
                 </Badge>
+                {isHostelUsingDefaultImage(hostel.image_url) && (
+                  <Badge variant="outline" className="bg-yellow-500/90 text-yellow-900 border-yellow-600 backdrop-blur-sm">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Default Image - Not Original Photo
+                  </Badge>
+                )}
               </div>
             </div>
             <CardHeader>

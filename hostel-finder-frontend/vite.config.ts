@@ -16,6 +16,10 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    sourcemap: mode === "development", // Only enable source maps in development
+    sourcemap: false, // Disable source maps to prevent 404 errors
+  },
+  esbuild: {
+    // Suppress source map warnings in development
+    sourcemap: false,
   },
 }));

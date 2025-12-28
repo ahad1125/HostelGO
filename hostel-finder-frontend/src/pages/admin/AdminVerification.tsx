@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { adminApi, Hostel } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getHostelImage } from "@/utils/hostelImages";
+import { getHostelImage, isHostelUsingDefaultImage } from "@/utils/hostelImages";
 
 const AdminVerification = () => {
   const navigate = useNavigate();
@@ -154,12 +154,32 @@ const AdminVerification = () => {
             <Card key={hostel.id} className="overflow-hidden">
               <div className="flex flex-col md:flex-row">
                 {/* Image */}
-                <div className="md:w-64 h-48 md:h-auto flex-shrink-0">
+                <div className="md:w-64 h-48 md:h-auto flex-shrink-0 bg-muted relative overflow-hidden">
                   <img
                     src={getHostelImage(hostel.id, hostel.image_url)}
                     alt={hostel.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover min-h-[192px]"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      // Fallback to default hostel image
+                      target.src = `https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop&q=80`;
+                      target.onerror = null;
+                    }}
+                    onLoad={(e) => {
+                      // Ensure image is visible after loading
+                      const target = e.target as HTMLImageElement;
+                      target.style.opacity = '1';
+                    }}
+                    style={{ opacity: 0, transition: 'opacity 0.3s' }}
                   />
+                  {isHostelUsingDefaultImage(hostel.image_url) && (
+                    <div className="absolute top-2 left-2 right-2">
+                      <Badge variant="outline" className="bg-yellow-500/90 text-yellow-900 border-yellow-600 backdrop-blur-sm text-xs">
+                        Default Image
+                      </Badge>
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -254,11 +274,27 @@ const AdminVerification = () => {
               </DialogHeader>
 
               <div className="space-y-4">
-                <img
-                  src={getHostelImage(selectedHostel.id, selectedHostel.image_url)}
-                  alt={selectedHostel.name}
-                  className="w-full h-48 object-cover rounded-lg"
-                />
+                <div className="w-full h-48 bg-muted rounded-lg overflow-hidden relative">
+                  <img
+                    src={getHostelImage(selectedHostel.id, selectedHostel.image_url)}
+                    alt={selectedHostel.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&auto=format&fit=crop&q=80`;
+                      target.onerror = null;
+                    }}
+                  />
+                  {isHostelUsingDefaultImage(selectedHostel.image_url) && (
+                    <div className="absolute top-2 left-2 right-2">
+                      <Badge variant="outline" className="bg-yellow-500/90 text-yellow-900 border-yellow-600 backdrop-blur-sm">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Default Image - Not Original Photo
+                      </Badge>
+                    </div>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
