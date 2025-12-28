@@ -129,6 +129,7 @@ const AdminBookings = () => {
 
   const allBookings = bookings;
   const confirmedBookings = allBookings.filter(b => b.status === 'confirmed');
+  const ownerApprovedBookings = allBookings.filter(b => b.status === 'owner_approved');
   const pendingBookings = allBookings.filter(b => b.status === 'pending');
   const cancelledBookings = allBookings.filter(b => b.status === 'cancelled');
 
@@ -136,6 +137,8 @@ const AdminBookings = () => {
     switch (status) {
       case 'confirmed':
         return <Badge className="bg-green-500 text-white"><CheckCircle className="h-3 w-3 mr-1" />Confirmed</Badge>;
+      case 'owner_approved':
+        return <Badge className="bg-blue-500 text-white"><CheckCircle className="h-3 w-3 mr-1" />Owner Approved</Badge>;
       case 'pending':
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
       case 'cancelled':
