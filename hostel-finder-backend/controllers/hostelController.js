@@ -20,8 +20,8 @@ const getPublicHostels = async (req, res) => {
     try {
         console.log("🔍 Getting public hostels (verified only)");
         
-        // Direct query - simple and reliable
-        const query = "SELECT * FROM hostels WHERE is_verified = 1 ORDER BY id DESC";
+        // Direct query - simple and reliable (include created_at for "New This Month" calculation)
+        const query = "SELECT *, COALESCE(created_at, NOW()) as created_at FROM hostels WHERE is_verified = 1 ORDER BY id DESC";
         console.log("📝 Executing query:", query);
         
         const [rows] = await db.query(query);
@@ -67,7 +67,8 @@ const getAllHostels = async (req, res) => {
             console.log("📚 Student: Fetching verified hostels only");
             const [rows] = await db.query(
                 `SELECT h.*, u.name as owner_name, u.email as owner_email,
-                        COALESCE(u.contact_number, '') as owner_contact_number
+                        COALESCE(u.contact_number, '') as owner_contact_number,
+                        COALESCE(h.created_at, NOW()) as created_at
                  FROM hostels h
                  JOIN users u ON h.owner_id = u.id
                  WHERE h.is_verified = 1
@@ -93,7 +94,8 @@ const getAllHostels = async (req, res) => {
         
         // For owners and admins, use direct query instead of model method
         let query = `SELECT h.*, u.name as owner_name, u.email as owner_email,
-                            COALESCE(u.contact_number, '') as owner_contact_number
+                            COALESCE(u.contact_number, '') as owner_contact_number,
+                            COALESCE(h.created_at, NOW()) as created_at
                      FROM hostels h
                      JOIN users u ON h.owner_id = u.id`;
         const conditions = [];
@@ -160,7 +162,8 @@ const searchHostels = async (req, res) => {
         
         // Build query with direct database access
         let query = `SELECT h.*, u.name as owner_name, u.email as owner_email,
-                            COALESCE(u.contact_number, '') as owner_contact_number
+                            COALESCE(u.contact_number, '') as owner_contact_number,
+                            COALESCE(h.created_at, NOW()) as created_at
                      FROM hostels h
                      JOIN users u ON h.owner_id = u.id`;
         const conditions = [];
@@ -246,7 +249,8 @@ const getHostelById = async (req, res) => {
         // Use direct query for reliability (same pattern as other working endpoints)
         const [rows] = await db.query(
             `SELECT h.*, u.name as owner_name, u.email as owner_email,
-                    COALESCE(u.contact_number, '') as owner_contact_number
+                    COALESCE(u.contact_number, '') as owner_contact_number,
+                    COALESCE(h.created_at, NOW()) as created_at
              FROM hostels h
              JOIN users u ON h.owner_id = u.id
              WHERE h.id = ?`,

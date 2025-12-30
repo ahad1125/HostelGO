@@ -36,6 +36,7 @@ export interface Hostel {
   contact_number?: string;
   confirmed_bookings?: number;
   image_url?: string | null;
+  created_at?: string;
 }
 
 export interface Review {

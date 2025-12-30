@@ -60,6 +60,7 @@ const StudentDashboard = () => {
           facilities: hostel.facilities ? hostel.facilities.split(",").map((f) => f.trim()).filter(Boolean) : [],
           image: getHostelImage(hostel.id, hostel.image_url),
           isVerified: hostel.is_verified === 1,
+          created_at: (hostel as any).created_at, // Preserve created_at for "New This Month" calculation
         }));
         setHostels(transformed);
       } catch (error: any) {
@@ -93,12 +94,32 @@ const StudentDashboard = () => {
   const topRatedHostels = [...verifiedHostels].slice(0, 3);
 
   const uniqueCities = new Set(verifiedHostels.map((h) => h.city));
+  
+  // Calculate "New This Month" - count hostels created in the current month
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const newThisMonth = verifiedHostels.filter((hostel: any) => {
+    // If hostel has created_at, use it for filtering
+    if (hostel.created_at) {
+      try {
+        const createdDate = new Date(hostel.created_at);
+        // Check if the date is valid and within current month
+        if (!isNaN(createdDate.getTime())) {
+          return createdDate >= firstDayOfMonth && createdDate <= now;
+        }
+      } catch (e) {
+        console.warn('Invalid created_at date:', hostel.created_at);
+      }
+    }
+    // For hostels without created_at or invalid date, consider them as "not new"
+    return false;
+  }).length;
 
   const stats = [
     { icon: Building2, label: "Available Hostels", value: verifiedHostels.length },
     { icon: MapPin, label: "Cities Covered", value: uniqueCities.size },
     { icon: Star, label: "Average Rating", value: "4.5" },
-    { icon: TrendingUp, label: "New This Month", value: "-" },
+    { icon: TrendingUp, label: "New This Month", value: newThisMonth.toString() },
   ];
 
   return (

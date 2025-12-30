@@ -85,9 +85,31 @@ async function initializeDatabase() {
         contact_number VARCHAR(20),
         is_verified TINYINT(1) DEFAULT 0,
         image_url MEDIUMTEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
+        
+        // Add created_at column if it doesn't exist (for existing databases)
+        try {
+            const [columns] = await connection.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'hostels' 
+                AND COLUMN_NAME = 'created_at'
+            `);
+            
+            if (columns.length === 0) {
+                await connection.query(`
+                    ALTER TABLE hostels 
+                    ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                `);
+                console.log("✅ Added created_at column to hostels table");
+            }
+        } catch (err) {
+            console.log("ℹ️ created_at column check:", err.message);
+        }
         
         // Add image_url column if it doesn't exist, or migrate TEXT to MEDIUMTEXT (for existing databases)
         try {

@@ -742,10 +742,6 @@ const HostelDetail = () => {
                   <dd className="font-medium">Paying Guest</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Gender</dt>
-                  <dd className="font-medium">Co-ed</dd>
-                </div>
-                <div className="flex justify-between">
                   <dt className="text-muted-foreground">Room Types</dt>
                   <dd className="font-medium">Single, Double, Triple</dd>
                 </div>

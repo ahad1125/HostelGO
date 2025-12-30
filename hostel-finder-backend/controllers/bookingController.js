@@ -55,17 +55,27 @@ const createBooking = async (req, res) => {
             return res.status(403).json({ error: "You can only book verified hostels" });
         }
 
-        // Check if student already has a booking for this hostel
+        // Check if student already has an active booking (any hostel)
+        // A student can only have ONE active booking at a time
         const [existingBookings] = await db.query(
-            "SELECT * FROM bookings WHERE hostel_id = ? AND student_id = ? AND status IN ('pending', 'owner_approved', 'confirmed')",
-            [parseInt(hostel_id), user.id]
+            "SELECT * FROM bookings WHERE student_id = ? AND status IN ('pending', 'owner_approved', 'confirmed')",
+            [user.id]
         );
 
         if (existingBookings.length > 0) {
-            console.log("⚠️ Student already has a booking for this hostel");
+            console.log("⚠️ Student already has an active booking");
+            const existingBooking = existingBookings[0];
+            
+            // Get the hostel name for the error message
+            const [hostelNameRows] = await db.query(
+                "SELECT name FROM hostels WHERE id = ?",
+                [existingBooking.hostel_id]
+            );
+            const existingHostelName = hostelNameRows[0]?.name || "a hostel";
+            
             return res.status(400).json({ 
-                error: "You already have a booking for this hostel",
-                booking: existingBookings[0]
+                error: `You already have an active booking for ${existingHostelName}. Please cancel your current booking before booking another hostel.`,
+                booking: existingBooking
             });
         }
 
